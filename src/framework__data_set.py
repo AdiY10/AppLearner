@@ -226,6 +226,7 @@ def __get_data_as_list_of_df(metric, application_name, path_to_data):
                 data_dict=data_dict,
                 application_name=application_name
             )
+
     return result_list
 
 
@@ -239,7 +240,7 @@ def get_data_set(metric, application_name, path_to_data):
     # constants
     __supported_metrics = ["container_cpu", "container_mem", "node_mem"]
 
-    # checks
+    # checks if metric is one of the supported metrics
     assert metric in __supported_metrics
 
     list_of_df = __get_data_as_list_of_df(
