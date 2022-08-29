@@ -19,7 +19,6 @@ import numpy as np
 ***********************************************************************************************************************
 """
 
-
 class TimeSeriesDataSet:
     """
     Class that houses time series data set.
