@@ -103,8 +103,8 @@ class TimeSeriesDataSet:
 
     def scale_data(self):
         """
-        scales the entire data set.
-        each sample is standarized (value - mean / std)
+        rescaling the distribution of values so that the mean of observed values is 0, and the std is 1.
+        each sample is standardized (value - mean / std)
         """
         assert not self.__is_data_scaled
         self.__is_data_scaled = True
@@ -113,12 +113,12 @@ class TimeSeriesDataSet:
         # print("max_sample = ", max_sample, " min_sample = ", min_sample)
         for df in self:
             standardized_sample_column = (df["sample"] - self.__mean) / self.__std
-            # print(normalized_sample_column)
+            # print("sample", df["sample"] , standardized_sample_column)
             df["sample"] = standardized_sample_column
 
     def split_to_train_and_test(self, length_to_predict):
         """
-        according to an input, length to predict , we split the entire data set to train set and test set.
+        according to an input, length to predict, we split the entire data set to train set and test set.
         The test set will be the same as the dataset in self. The train set will have the same amount of samples,
         but they will be shorter samples with their "tips" cut off.
         @param length_to_predict: The length to cut off from the train set.
@@ -164,7 +164,7 @@ def __get_names_of_relevant_files(metric, path_to_data):
     find the names of files that contain a specified metric in the directory.
     @param metric: specified metric to get : "container_cpu", "container_mem", "node_mem"
     @param path_to_data: the path to the directory
-    @return: a list of the files that contain the specified specified from each json file in the directory specified
+    @return: a list of the files that contain the specified from each json file in the directory specified
     """
     list_of_files = __get_names_of_json_files_in_directory(path_to_data)
     relevant_files = [file for file in list_of_files if (metric in file)]
