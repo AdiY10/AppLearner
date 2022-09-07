@@ -12,7 +12,7 @@ import time
 from sktime.performance_metrics.forecasting import MeanAbsoluteScaledError
 from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
 from sktime.performance_metrics.forecasting import MeanSquaredError
-from framework__data_set import get_data_set
+from src.framework__data_set import get_data_set
 
 """
 ***********************************************************************************************************************
@@ -28,7 +28,7 @@ def plot_result(original, prediction_as_np_array):
     original_as_series.index = x_axis
     predicted_as_series.index = x_axis[-len(prediction_as_np_array):]
     ax = original_as_series.plot(color="b")
-    predicted_as_series.plot(ax=ax, color="orange")
+    predicted_as_series.plot(ax=ax, color="red")
     plt.show()
 
 
@@ -49,27 +49,7 @@ class TestBench:
             self,
             class_to_test,
             path_to_data,
-            tests_to_perform=(
-                # node mem
-                {"metric": "node_mem", "app": "moc/smaug", "prediction length": 16, "sub sample rate": 30,
-                 "data length limit": 30},
-                {"metric": "node_mem", "app": "emea/balrog", "prediction length": 16, "sub sample rate": 30,
-                 "data length limit": 30},
-                # container mem
-                {"metric": "container_mem", "app": "nmstate-handler", "prediction length": 16, "sub sample rate": 30,
-                 "data length limit": 30},
-                {"metric": "container_mem", "app": "coredns", "prediction length": 16, "sub sample rate": 30,
-                 "data length limit": 30},
-                {"metric": "container_mem", "app": "keepalived", "prediction length": 16, "sub sample rate": 30,
-                 "data length limit": 30},
-                # container cpu
-                {"metric": "container_cpu", "app": "kube-rbac-proxy", "prediction length": 16, "sub sample rate": 30,
-                 "data length limit": 30},
-                {"metric": "container_cpu", "app": "dns", "prediction length": 16, "sub sample rate": 30,
-                 "data length limit": 30},
-                {"metric": "container_cpu", "app": "collector", "prediction length": 16, "sub sample rate": 30,
-                 "data length limit": 30},
-            ),
+            tests_to_perform
     ):
         self.__class_to_test = class_to_test
         self.__path_to_data = path_to_data
