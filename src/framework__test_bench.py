@@ -27,8 +27,9 @@ def plot_result(original, prediction_as_np_array):
     x_axis = [time for time in original["time"]]
     original_as_series.index = x_axis
     predicted_as_series.index = x_axis[-len(prediction_as_np_array):]
-    ax = original_as_series.plot(color="b")
-    predicted_as_series.plot(ax=ax, color="red")
+    ax = original_as_series.plot(color="blue", label="Training Set")
+    predicted_as_series.plot(ax=ax, color="red", label="Predictions")
+    plt.legend()
     plt.show()
 
 
@@ -220,7 +221,8 @@ class TestBench:
         @param as_table: whether to print as a table or not.
         """
         if as_table:
-            print(self.__msg, f"| {metric} | {app} | {round(training_time)} seconds   | {round(mse, 5)} | {round(precision, 5)} | {round(recall, 5)} | {round(f1, 5)}  | {round(mase, 5)} | {round(mape, 5)} |")
+            print(self.__msg,
+                  f"| {metric} | {app} | {round(training_time)} seconds   | {round(mse, 5)} | {round(precision, 5)} | {round(recall, 5)} | {round(f1, 5)}  | {round(mase, 5)} | {round(mape, 5)} |")
         else:
             print(self.__msg, f"***********************************************************************")
             print(self.__msg, f"REPORT for                              metric='{metric}', app='{app}':")
@@ -335,11 +337,12 @@ class TestBench:
 """
 
 
-def main():
+def main(test_to_perform):
     class DumbPredictor:
         """
         A dumb predictor is used to test the framework- it takes the first samples and sets them as predictions.
         """
+
         def __init__(self, length_of_shortest_time_series, metric, app):
             print("Constructor called.")
             self.print_once = True
@@ -366,7 +369,8 @@ def main():
 
     tb = TestBench(
         class_to_test=DumbPredictor,
-        path_to_data="../data/"
+        path_to_data="../data/",
+        tests_to_perform=test_to_perform
     )
     tb.run_training_and_tests()
 
@@ -378,4 +382,25 @@ def main():
 """
 
 if __name__ == "__main__":
-    main()
+    test_to_perform = (
+        # Container CPU
+        {"metric": "container_cpu", "app": "kube-rbac-proxy", "prediction length": 16, "sub sample rate": 30,
+         "data length limit": 30},
+        {"metric": "container_cpu", "app": "dns", "prediction length": 16, "sub sample rate": 30,
+         "data length limit": 30},
+        {"metric": "container_cpu", "app": "collector", "prediction length": 16, "sub sample rate": 30,
+         "data length limit": 30},
+        # Container Memory
+        {"metric": "container_mem", "app": "nmstate-handler", "prediction length": 16, "sub sample rate": 30,
+         "data length limit": 30},
+        {"metric": "container_mem", "app": "coredns", "prediction length": 16, "sub sample rate": 30,
+         "data length limit": 30},
+        {"metric": "container_mem", "app": "keepalived", "prediction length": 16, "sub sample rate": 30,
+         "data length limit": 30},
+        # Node Memory
+        {"metric": "node_mem", "app": "moc/smaug", "prediction length": 16, "sub sample rate": 30,
+         "data length limit": 30},
+        {"metric": "node_mem", "app": "emea/balrog", "prediction length": 16, "sub sample rate": 30,
+         "data length limit": 30}
+    )
+    main(test_to_perform)
