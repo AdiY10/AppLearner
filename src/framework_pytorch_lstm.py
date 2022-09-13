@@ -4,10 +4,9 @@
 ***********************************************************************************************************************
 """
 
-import pytorch__driver_for_test_bench
+import src.pytorch__driver_for_test_bench as pytorch__driver_for_test_bench
 import torch.nn as nn
 import torch.optim as optim
-import framework__test_bench
 
 """
 ***********************************************************************************************************************
@@ -130,6 +129,7 @@ class PytorchLSTMTester:
 
 
 def main(test_to_perform):
+    import src.framework__test_bench as framework__test_bench
     tb = framework__test_bench.TestBench(
         class_to_test=PytorchLSTMTester,
         path_to_data="../data/",
