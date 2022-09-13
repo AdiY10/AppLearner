@@ -7,6 +7,7 @@
 import pytorch__driver_for_test_bench
 import torch.nn as nn
 import torch.optim as optim
+import framework__test_bench
 
 """
 ***********************************************************************************************************************
@@ -129,7 +130,6 @@ class PytorchLSTMTester:
 
 
 def main(test_to_perform):
-    import framework__test_bench
     tb = framework__test_bench.TestBench(
         class_to_test=PytorchLSTMTester,
         path_to_data="../data/",
@@ -150,20 +150,20 @@ if __name__ == "__main__":
         {"metric": "container_cpu", "app": "kube-rbac-proxy", "prediction length": 16, "sub sample rate": 30,
          "data length limit": 30},
         {"metric": "container_cpu", "app": "dns", "prediction length": 16, "sub sample rate": 30,
-         "data length limit": 30},
-        {"metric": "container_cpu", "app": "collector", "prediction length": 16, "sub sample rate": 30,
-         "data length limit": 30},
-        # Container Memory
-        {"metric": "container_mem", "app": "nmstate-handler", "prediction length": 16, "sub sample rate": 30,
-         "data length limit": 30},
-        {"metric": "container_mem", "app": "coredns", "prediction length": 16, "sub sample rate": 30,
-         "data length limit": 30},
-        {"metric": "container_mem", "app": "keepalived", "prediction length": 16, "sub sample rate": 30,
-         "data length limit": 30},
-        # Node Memory
-        {"metric": "node_mem", "app": "moc/smaug", "prediction length": 16, "sub sample rate": 30,
-         "data length limit": 30},
-        {"metric": "node_mem", "app": "emea/balrog", "prediction length": 16, "sub sample rate": 30,
          "data length limit": 30}
+        # {"metric": "container_cpu", "app": "collector", "prediction length": 16, "sub sample rate": 30,
+        #  "data length limit": 30},
+        # # Container Memory
+        # {"metric": "container_mem", "app": "nmstate-handler", "prediction length": 16, "sub sample rate": 30,
+        #  "data length limit": 30},
+        # {"metric": "container_mem", "app": "coredns", "prediction length": 16, "sub sample rate": 30,
+        #  "data length limit": 30},
+        # {"metric": "container_mem", "app": "keepalived", "prediction length": 16, "sub sample rate": 30,
+        #  "data length limit": 30},
+        # # Node Memory
+        # {"metric": "node_mem", "app": "moc/smaug", "prediction length": 16, "sub sample rate": 30,
+        #  "data length limit": 30},
+        # {"metric": "node_mem", "app": "emea/balrog", "prediction length": 16, "sub sample rate": 30,
+        #  "data length limit": 30}
     )
     main(test_to_perform)

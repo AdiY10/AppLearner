@@ -27,7 +27,7 @@ def plot_result(original, prediction_as_np_array):
     x_axis = [time for time in original["time"]]
     original_as_series.index = x_axis
     predicted_as_series.index = x_axis[-len(prediction_as_np_array):]
-    ax = original_as_series.plot(color="blue", label="Training Set")
+    ax = original_as_series.plot(color="blue", label="Samples")
     predicted_as_series.plot(ax=ax, color="red", label="Predictions")
     plt.legend()
     plt.show()
@@ -93,11 +93,11 @@ class TestBench:
         dataset.filter_data_that_is_too_short(data_length_limit=dl_limit)
         print(self.__msg, "Scaling data.")
         dataset.scale_data()
-        print(self.__msg, "Splitting data into train and test")
+        print(self.__msg, "Splitting data into train and test.")
         train, test = dataset.split_to_train_and_test(length_to_predict=self.length_to_predict)
         assert len(train) == len(test)
         assert min([len(df) for df in train] + [len(df) for df in test]) >= (dl_limit - self.length_to_predict)
-        print(self.__msg, f"Amount of train/test data is {len(train)}")
+        print(self.__msg, f"Amount of train/test data is {len(train)}.")
         return train, test
 
     def __get_model(self, metric, app, train, test):
@@ -270,9 +270,9 @@ class TestBench:
         metric, app = dictionary["metric"], dictionary["app"]
         print(self.__msg, f"Fetching data for metric='{metric}', app='{app}'.")
         train, test = self.__get_data(dictionary=dictionary)
-        print(self.__msg, "Making an instance of the class we want to test")
+        print(self.__msg, "Making an instance of the class we want to test.")
         model = self.__get_model(metric=metric, app=app, train=train, test=test)
-        print(self.__msg, "Starting training loop")
+        print(self.__msg, "Starting training loop.")
         training_start_time = time.time()
         model.learn_from_data_set(training_data_set=train)
         training_stop_time = time.time()
@@ -337,36 +337,37 @@ class TestBench:
 """
 
 
+class DumbPredictor:
+    """
+    A dumb predictor is used to test the framework- it takes the first samples and sets them as predictions.
+    """
+
+    def __init__(self, length_of_shortest_time_series, metric, app):
+        print("Constructor called.")
+        self.print_once = True
+
+    def learn_from_data_set(self, training_data_set):
+        print("Training started.")
+        print("What does a dataframe to learn on look like?")
+        print(training_data_set[0])
+        print("Training ending.")
+
+    def predict(self, ts_as_df_start, how_much_to_predict):
+        # if self.print_once:
+        #     self.print_once = False
+        #     print("What does a dataframe to predict look like?")
+        #     display(ts_as_df_start)
+        ts_as_np = ts_as_df_start["sample"].to_numpy()
+        res = np.resize(ts_as_np, how_much_to_predict)
+        # these checks will also be done by the testbench
+        assert isinstance(res, np.ndarray)
+        assert len(res) == how_much_to_predict
+        assert res.shape == (how_much_to_predict,)
+        assert res.dtype == np.float64
+        return res
+
+
 def main(test_to_perform):
-    class DumbPredictor:
-        """
-        A dumb predictor is used to test the framework- it takes the first samples and sets them as predictions.
-        """
-
-        def __init__(self, length_of_shortest_time_series, metric, app):
-            print("Constructor called.")
-            self.print_once = True
-
-        def learn_from_data_set(self, training_data_set):
-            print("Training started.")
-            print("What does a dataframe to learn on look like?")
-            # display(training_data_set[0])
-            print("Training ending.")
-
-        def predict(self, ts_as_df_start, how_much_to_predict):
-            # if self.print_once:
-            #     self.print_once = False
-            #     print("What does a dataframe to predict look like?")
-            #     display(ts_as_df_start)
-            ts_as_np = ts_as_df_start["sample"].to_numpy()
-            res = np.resize(ts_as_np, how_much_to_predict)
-            # these checks will also be done by the testbench
-            assert isinstance(res, np.ndarray)
-            assert len(res) == how_much_to_predict
-            assert res.shape == (how_much_to_predict,)
-            assert res.dtype == np.float64
-            return res
-
     tb = TestBench(
         class_to_test=DumbPredictor,
         path_to_data="../data/",
