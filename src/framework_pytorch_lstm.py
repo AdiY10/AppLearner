@@ -4,7 +4,7 @@
 ***********************************************************************************************************************
 """
 
-import src.pytorch__driver_for_test_bench as pytorch__driver_for_test_bench
+import pytorch__driver_for_test_bench as pytorch__driver_for_test_bench
 import torch.nn as nn
 import torch.optim as optim
 
@@ -42,17 +42,17 @@ class ExtractTensorAfterLSTM(nn.Module):
 class LSTMPredictor(nn.Module):
     def __init__(self, input_size, output_size):
         super(LSTMPredictor, self).__init__()
-        hidden_size_for_lstm = 200
-        internal_hidden_dimension = 32
-        num_layers = 2
-        dropout = 0.03
+        hidden_size_for_lstm = 20
+        internal_hidden_dimension = 5
+        num_layers = 1
+        # dropout = 0.03
         self.__seq_model = nn.Sequential(
             nn.LSTM(
                 input_size=input_size,
                 hidden_size=hidden_size_for_lstm,
                 num_layers=num_layers,
                 batch_first=True,
-                dropout=dropout,
+                # dropout=dropout,
             ),
             ExtractTensorAfterLSTM(),
             nn.Linear(
@@ -129,7 +129,7 @@ class PytorchLSTMTester:
 
 
 def main(test_to_perform):
-    import src.framework__test_bench as framework__test_bench
+    import framework__test_bench as framework__test_bench
     tb = framework__test_bench.TestBench(
         class_to_test=PytorchLSTMTester,
         path_to_data="../data/",
@@ -147,8 +147,8 @@ def main(test_to_perform):
 if __name__ == "__main__":
     test_to_perform = (
         # Container CPU
-        {"metric": "container_cpu", "app": "kube-rbac-proxy", "prediction length": 16, "sub sample rate": 30,
-         "data length limit": 30},
+        {"metric": "container_cpu", "app": "collector", "prediction length": 5, "sub sample rate": 5,
+         "data length limit": 50},
         {"metric": "container_cpu", "app": "dns", "prediction length": 16, "sub sample rate": 30,
          "data length limit": 30}
         # {"metric": "container_cpu", "app": "collector", "prediction length": 16, "sub sample rate": 30,

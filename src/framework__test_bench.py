@@ -12,7 +12,7 @@ import time
 from sktime.performance_metrics.forecasting import MeanAbsoluteScaledError
 from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
 from sktime.performance_metrics.forecasting import MeanSquaredError
-from src.framework__data_set import get_data_set
+from framework__data_set import get_data_set
 
 """
 ***********************************************************************************************************************
@@ -404,4 +404,12 @@ if __name__ == "__main__":
         {"metric": "node_mem", "app": "emea/balrog", "prediction length": 16, "sub sample rate": 30,
          "data length limit": 30}
     )
-    main(test_to_perform)
+
+    real_test_to_perform = (
+        # Container CPU
+        {"metric": "container_cpu", "app": "kube-rbac-proxy", "prediction length": 16, "sub sample rate": 10,
+         "data length limit": 80},
+        {"metric": "container_cpu", "app": "dns", "prediction length": 16, "sub sample rate": 30,
+         "data length limit": 30},
+    )
+    main(real_test_to_perform)

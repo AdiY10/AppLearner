@@ -1,2 +1,0 @@
-Instead of this txt file, put here JSON files with the relevant data.
-

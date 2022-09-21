@@ -68,7 +68,27 @@ class TimeSeriesDataSet:
         new_list_of_df = []
 
         for df in self:
+            # for i in range(10):
+            #     print(df.loc[[i]])
             sub_sampled_data = df.groupby(df.index // sub_sample_rate).max()
+            # print(sub_sampled_data.loc[[0]])
+            # exit()
+            assert len(sub_sampled_data) == ((len(df) + sub_sample_rate - 1) // sub_sample_rate)
+            new_list_of_df.append(sub_sampled_data)
+
+        self.__list_of_df = new_list_of_df
+
+    # todo: fix the bug where the "time" column is disappear
+    def mean_sub_sample_data(self, sub_sample_rate):
+        """
+        creates sub sampling according to the rate (if for example rate = 5, then every 5 samples, the one with the
+        mean value is chosen to be in the data set).
+        @param sub_sample_rate:
+        """
+        new_list_of_df = []
+
+        for df in self:
+            sub_sampled_data = df.groupby(df.index // sub_sample_rate).mean()
             assert len(sub_sampled_data) == ((len(df) + sub_sample_rate - 1) // sub_sample_rate)
             new_list_of_df.append(sub_sampled_data)
 
@@ -101,6 +121,24 @@ class TimeSeriesDataSet:
             ts.plot()
             plt.show()
 
+
+    def plot_not_random_dataset(self, number_of_samples):
+        """
+        not randomly selects samples from the data sets and plots . x-axis is time and y-axis is the value
+        @param number_of_samples: number of selected samples
+        """
+        print("Totam number of TS are: ", len(self.__list_of_df))
+        counter = 0
+        for df in self.__list_of_df:
+            if counter == number_of_samples:
+                break
+            ts = df["sample"].copy()
+            ts.index = [time for time in df["time"]]
+            ts.plot()
+            plt.show()
+            counter += 1
+
+
     def scale_data(self):
         """
         rescaling the distribution of values so that the mean of observed values is 0, and the std is 1.
@@ -109,7 +147,7 @@ class TimeSeriesDataSet:
         assert not self.__is_data_scaled
         self.__is_data_scaled = True
         self.__mean, self.__std = self.__get_mean_and_std()
-        # print(f"self.__mean = {self.__mean}, self.__std = {self.__std}", )
+        # print(f"self.__mean = {self.__mean}, self.__std = {self.__std}" , )
         # print("max_sample = ", max_sample, " min_sample = ", min_sample)
         for df in self:
             standardized_sample_column = (df["sample"] - self.__mean) / self.__std
@@ -295,14 +333,15 @@ def main():
     if test == 0:
         print("Getting DataSet.")
         dataset = get_data_set(
-            metric="container_mem",
-            application_name="bridge-marker",
+            metric="container_cpu",
+            application_name="collector",
             path_to_data="../data/"
         )
         print("Plotting.")
-        dataset.plot_dataset(number_of_samples=3)
+        dataset.plot_not_random_dataset(number_of_samples=25)
         print("Subsampling.")
-        dataset.sub_sample_data(sub_sample_rate=60)
+        exit()
+        dataset.sub_sample_data(sub_sample_rate=10)
         print("Plotting.")
         dataset.plot_dataset(number_of_samples=3)
         print("Normalizing.")
@@ -314,8 +353,8 @@ def main():
         print("Splitting.")
         train, test = dataset.split_to_train_and_test(length_to_predict=length_to_predict)
         print("Plotting.")
-        train.plot_dataset(number_of_samples=10)
-        test.plot_dataset(number_of_samples=10)
+        train.plot_dataset(number_of_samples=3)
+        test.plot_dataset(number_of_samples=3)
     else:
         hist = get_amount_of_data_per_application(
             metric="container_mem",
