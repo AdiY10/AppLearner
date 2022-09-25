@@ -12,6 +12,9 @@ from datetime import datetime, timedelta
 from os import listdir
 from os.path import isfile, join
 import numpy as np
+from darts.datasets import (AirPassengersDataset, MonthlyMilkDataset,
+                            AusBeerDataset, GasRateCO2Dataset, WoolyDataset, ElectricityDataset)
+# from darts.models.filtering.kalman_filter import KalmanFilter
 
 """
 ***********************************************************************************************************************
@@ -29,6 +32,7 @@ class TimeSeriesDataSet:
         self.__is_data_scaled = False
         self.__mean = None
         self.__std = None
+        self.merged_df = None
 
     """
     *******************************************************************************************************************
@@ -59,6 +63,22 @@ class TimeSeriesDataSet:
     def __len__(self):
         return len(self.__list_of_df)
 
+    def merge_df(self):
+        """
+        concat all the dataframes of the same application
+        """
+        self.merged_df = pd.concat(self.__list_of_df)
+
+    def sort_by_time(self):
+        """
+        concat all the dataframes of the same application
+        and sort them by time
+        """
+        self.merge_df()
+        self.merged_df = self.merged_df.sort_values(by="time")
+        # todo: figure out why there is too much samples
+
+
     def sub_sample_data(self, sub_sample_rate):
         """
         creates sub sampling according to the rate (if for example rate = 5, then every 5 samples, the one with the
@@ -68,11 +88,7 @@ class TimeSeriesDataSet:
         new_list_of_df = []
 
         for df in self:
-            # for i in range(10):
-            #     print(df.loc[[i]])
             sub_sampled_data = df.groupby(df.index // sub_sample_rate).max()
-            # print(sub_sampled_data.loc[[0]])
-            # exit()
             assert len(sub_sampled_data) == ((len(df) + sub_sample_rate - 1) // sub_sample_rate)
             new_list_of_df.append(sub_sampled_data)
 
@@ -327,6 +343,25 @@ def get_amount_of_data_per_application(metric, path_to_data):
 
 
 def main():
+    # ts1 = AirPassengersDataset().load()
+    # ts2 = WoolyDataset().load()
+    # ts3 = AusBeerDataset().load()
+    # ts4 = GasRateCO2Dataset().load()
+    # ts5 = ElectricityDataset().load()
+    # ts6 = MonthlyMilkDataset().load()
+    # ts1.plot()
+    # plt.show()
+    # ts2.plot()
+    # plt.show()
+    # ts3.plot()
+    # plt.show()
+    # ts4.plot()
+    # plt.show()
+    # ts5.plot()
+    # plt.show()
+    # ts6.plot()
+    # plt.show()
+    # exit()
     print("Start.")
     length_to_predict = 4
     test = 0
@@ -338,6 +373,8 @@ def main():
             path_to_data="../data/"
         )
         print("Plotting.")
+        print(dataset.sort_by_time())
+        exit()
         dataset.plot_not_random_dataset(number_of_samples=25)
         print("Subsampling.")
         exit()
