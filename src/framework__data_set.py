@@ -178,6 +178,9 @@ def __get_app_name_from_key(key: str):
     @return: the name of the app
     """
     app_name = key.split(", ")[0]
+    namespace = key.split(", ")[1]
+    node = key.split(", ")[2]
+    pod = key.split(", ")[3]
     return app_name
 
 
