@@ -67,6 +67,7 @@ class TimeSeriesDataSet:
         """
         concat all the dataframes of the same application
         """
+        # todo: fix the merging of same apps on different pods and namespaces
         self.merged_df = pd.concat(self.__list_of_df)
 
     def sort_by_time(self):
@@ -76,8 +77,6 @@ class TimeSeriesDataSet:
         """
         self.merge_df()
         self.merged_df = self.merged_df.sort_values(by="time")
-        # todo: figure out why there is too much samples
-
 
     def sub_sample_data(self, sub_sample_rate):
         """
@@ -94,13 +93,24 @@ class TimeSeriesDataSet:
 
         self.__list_of_df = new_list_of_df
 
-    # todo: fix the bug where the "time" column is disappear
+    def add_features(self):  # 2022-04-21 02:50:00   - example
+        """
+        Adding to the DataFrame "hour" and "day of week" columns for using those columns as features later
+        """
+        # todo: figure out if one-hot encoding can be good here
+        new_list_of_df = []
+        for df in self:
+            df['hour'] = df['time'].apply(lambda x: int((str(x).split(' ')[1].split(':')[0])))
+            df['day'] = df['time'].apply(lambda x: pd.Timestamp(str(x).split(' ')[0]).day_of_week) # or dayofweek
+        self.__list_of_df = new_list_of_df
+
     def mean_sub_sample_data(self, sub_sample_rate):
         """
         creates sub sampling according to the rate (if for example rate = 5, then every 5 samples, the one with the
         mean value is chosen to be in the data set).
         @param sub_sample_rate:
         """
+        # todo: fix the bug where the "time" column is disappear
         new_list_of_df = []
 
         for df in self:
@@ -372,15 +382,11 @@ def main():
             application_name="collector",
             path_to_data="../data/"
         )
-        print("Plotting.")
-        print(dataset.sort_by_time())
-        exit()
-        dataset.plot_not_random_dataset(number_of_samples=25)
-        print("Subsampling.")
-        exit()
         dataset.sub_sample_data(sub_sample_rate=10)
         print("Plotting.")
         dataset.plot_dataset(number_of_samples=3)
+        dataset.add_features()
+        exit()
         print("Normalizing.")
         dataset.scale_data()
         print("Plotting.")
