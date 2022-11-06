@@ -107,7 +107,7 @@ class PytorchLSTMTester:
         self.__best_model = pytorch__driver_for_test_bench.train_neural_network(
             training_data_set=training_data_set,
             model=self.__model,
-            num_epochs=30,
+            num_epochs=10,
             model_input_length=self.__model_input_length,
             batch_size=64,
             criterion=self.__criterion,

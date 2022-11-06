@@ -40,6 +40,9 @@ class TimeSeriesDataSet:
     *******************************************************************************************************************
     """
 
+    def get_list(self):
+        return self.__list_of_df
+
     def __get_mean_and_std(self):
         """
         calculates mean and std of all samples
@@ -77,6 +80,11 @@ class TimeSeriesDataSet:
         """
         self.merge_df()
         self.merged_df = self.merged_df.sort_values(by="time")
+        self.merged_df = self.merged_df.groupby(['time'], as_index=False).max().reset_index()
+
+    def get_marged(self):
+        return self.merged_df
+
 
     def sub_sample_data(self, sub_sample_rate):
         """
@@ -134,7 +142,7 @@ class TimeSeriesDataSet:
 
         self.__list_of_df = new_list_of_df
 
-    def plot_dataset(self, number_of_samples):
+    def plot_dataset(self, number_of_samples, title):
         """
         randomly selects samples from the data sets and plots . x-axis is time and y-axis is the value
         @param number_of_samples: number of randomly selected samples
@@ -145,7 +153,28 @@ class TimeSeriesDataSet:
             ts = df["sample"].copy()
             ts.index = [time for time in df["time"]]
             ts.plot()
+            plt.ylabel(title)
+            plt.xlabel('time stamp')
             plt.show()
+
+
+    def plot_group(self):
+        """
+        randomly selects samples from the data sets and plots . x-axis is time and y-axis is the value
+        @param number_of_samples: number of randomly selected samples
+        """
+        df = self.merged_df
+        # plt.close("all")
+        ts = df["sample"].copy()
+        ts.index = [time for time in df["time"]]
+        f = plt.figure()
+        f.set_figwidth(20)
+        f.set_figheight(10)
+        ts.plot()
+        plt.ylabel("group plot")
+        plt.xlabel('time stamp')
+        plt.show()
+
 
 
     def plot_not_random_dataset(self, number_of_samples):
@@ -382,22 +411,24 @@ def main():
             application_name="collector",
             path_to_data="../data/"
         )
-        dataset.sub_sample_data(sub_sample_rate=10)
-        print("Plotting.")
-        dataset.plot_dataset(number_of_samples=3)
-        dataset.add_features()
+        dataset.sort_by_time()
+        dataset.plot_group()
         exit()
+
+        dataset.sub_sample_data(sub_sample_rate=5)
+        print("Plotting.")
+        dataset.plot_dataset(number_of_samples=3, title="Value before normalization")
         print("Normalizing.")
         dataset.scale_data()
         print("Plotting.")
-        dataset.plot_dataset(number_of_samples=3)
+        dataset.plot_dataset(number_of_samples=3, title="Value after normalization")
         print("Filtering time series that are too short.")
-        dataset.filter_data_that_is_too_short(data_length_limit=2 * length_to_predict)
+        dataset.filter_data_that_is_too_short(data_length_limit=30)
         print("Splitting.")
         train, test = dataset.split_to_train_and_test(length_to_predict=length_to_predict)
         print("Plotting.")
-        train.plot_dataset(number_of_samples=3)
-        test.plot_dataset(number_of_samples=3)
+        train.plot_dataset(number_of_samples=3, title="train value")
+        test.plot_dataset(number_of_samples=3, title="test value")
     else:
         hist = get_amount_of_data_per_application(
             metric="container_mem",
