@@ -142,6 +142,35 @@ class TimeSeriesDataSet:
 
         self.__list_of_df = new_list_of_df
 
+
+    def filter_series_with_zeros(self):
+        """
+        filters the data samples with zeros.
+        """
+        new_list_of_df = []
+
+        for df in self:
+            # check if there is sample in the dataframe that contains some zero value
+            if not df.isin([0]).any().any():
+                new_list_of_df.append(df)
+
+        self.__list_of_df = new_list_of_df
+
+
+    def filter_series_extreme_values(self, n):
+        """
+        filter the first and last element from every dataframe
+        """
+        new_list_of_df = []
+
+        for df in self:
+            new_list_of_df.append(df.iloc[n:-n])
+            assert len(new_list_of_df[-1]) == len(df) - 2*n
+
+
+        self.__list_of_df = new_list_of_df
+
+
     def plot_dataset(self, number_of_samples, title):
         """
         randomly selects samples from the data sets and plots . x-axis is time and y-axis is the value
@@ -408,13 +437,22 @@ def main():
         print("Getting DataSet.")
         dataset = get_data_set(
             metric="container_cpu",
-            application_name="collector",
+            application_name="cni-plugins",
             path_to_data="../data/"
         )
-        dataset.sort_by_time()
-        dataset.plot_group()
+        # dataset.sort_by_time()
+        # dataset.plot_group()
+        # exit()
+
+        dataset.filter_data_that_is_too_short(data_length_limit=20)
+        dataset.filter_series_extreme_values(3)
+        dataset.plot_dataset(number_of_samples=20, title="Value before normalization")
+        print("number of series before filter zeros: ", len(dataset.get_list()))
+        dataset.filter_series_with_zeros()
+        print("number of series after filter zeros: ", len(dataset.get_list()))
         exit()
 
+        print("Splitting DataSet.")
         dataset.sub_sample_data(sub_sample_rate=5)
         print("Plotting.")
         dataset.plot_dataset(number_of_samples=3, title="Value before normalization")
