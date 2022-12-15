@@ -6,6 +6,7 @@
 import os
 
 import matplotlib.pyplot as plt
+import torch
 import numpy as np
 import pandas as pd
 import time
@@ -91,6 +92,14 @@ class TestBench:
         dataset.sub_sample_data(sub_sample_rate=ss_rate)
         print(self.__msg, f"Throwing out data that is less than {dl_limit * ss_rate / 60} hours long.")
         dataset.filter_data_that_is_too_short(data_length_limit=dl_limit)
+        print(self.__msg, f"Cleaning zeros.")
+        dataset.filter_series_with_zeros()
+        print(self.__msg, f"Throwing out data that is less than {dl_limit * ss_rate / 60} hours long.")
+        dataset.filter_data_that_is_too_short(data_length_limit=dl_limit)
+        print(self.__msg, f"clean extreme values")
+        dataset.filter_series_extreme_values(1)
+        print(self.__msg, f"Throwing out data that is less than {dl_limit * ss_rate / 60} hours long.")
+        dataset.filter_data_that_is_too_short(data_length_limit=dl_limit)
         print(self.__msg, "Scaling data.")
         dataset.scale_data()
         print(self.__msg, "Splitting data into train and test.")
@@ -101,7 +110,7 @@ class TestBench:
         return train, test
 
     def __get_model(self, metric, app, train, test):
-        length_of_shortest_time_series = min([len(df) for df in train] + [len(df) for df in test])
+        length_of_shortest_time_series = min([len(df) for df in train] + [len(df) for df in test]) # concatenate
         model = self.__class_to_test(
             length_of_shortest_time_series=length_of_shortest_time_series,
             metric=metric,
@@ -249,6 +258,7 @@ class TestBench:
         total_mase = 0
         total_mape = 0
         for i, test_sample in enumerate(test):
+
             mse_here, precision, recall, f1, mase, mape = self.__give_one_test_to_model(
                 test_sample=test_sample, model=model, should_print=(i < 10)
             )

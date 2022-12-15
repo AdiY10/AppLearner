@@ -92,15 +92,18 @@ def __prepare_batches(training_data_set, model_input_length, batch_size):
         ts_as_df["sample"].to_numpy()
         for ts_as_df in training_data_set
     ]
+
     list_of_input_output_np_array = [
         (arr[i: model_input_length + i], arr[model_input_length + i: model_input_length + i + 1])
         for arr in list_of_np_array
         for i in range(len(arr) - model_input_length)
     ]
-    print(__msg, f"number of training samples = {len(list_of_input_output_np_array)}")
+
+    # split all new TS into batches
     list_of_input_output_np_array_batched = __partition_list_to_batches(
         list_of_something=list_of_input_output_np_array, batch_size=batch_size
     )
+
     combined = __combine_batches_of_np_array(batches=list_of_input_output_np_array_batched)
     return combined
 
@@ -114,6 +117,8 @@ def __prepare_batches(training_data_set, model_input_length, batch_size):
 
 def __do_batch(batch_data, optimizer, model, criterion):
     train_input, train_target = batch_data
+    #only for CNN
+    train_input = torch.transpose(train_input, 1, 2)
     optimizer.zero_grad()
     out = model.forward(x=train_input)
     loss = criterion(out, train_target)
@@ -181,8 +186,13 @@ def predict(ts_as_df_start, how_much_to_predict, best_model):
     with torch.no_grad():
         ts_as_np = ts_as_df_start["sample"].to_numpy()
         ts_as_tensor = __convert_np_array_to_pytorch_tensor(ts_as_np)[None, :, None].to(get_device())
+        #if CNN
         for _ in range(how_much_to_predict):
+            # if CNN
+            ts_as_tensor = torch.transpose(ts_as_tensor, 1, 2)
             prediction = best_model.forward(ts_as_tensor)
+            # if CNN
+            ts_as_tensor = torch.transpose(ts_as_tensor, 1, 2)
             ts_as_tensor = torch.cat([ts_as_tensor, prediction[None, :]], dim=1)
         prediction_flattened = ts_as_tensor.view(how_much_to_predict + len(ts_as_df_start)).cpu()
         y = prediction_flattened.detach().numpy()[-how_much_to_predict:]
