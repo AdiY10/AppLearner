@@ -51,8 +51,10 @@ class TestBench:
             self,
             class_to_test,
             path_to_data,
-            tests_to_perform
+            tests_to_perform,
+            model_name = "CNN"
     ):
+        self.model_name = model_name
         self.__class_to_test = class_to_test
         self.__path_to_data = path_to_data
         for dictionary in tests_to_perform:

@@ -115,10 +115,11 @@ def __prepare_batches(training_data_set, model_input_length, batch_size):
 """
 
 
-def __do_batch(batch_data, optimizer, model, criterion):
+def __do_batch(batch_data, optimizer, model, criterion, model_name):
     train_input, train_target = batch_data
     #only for CNN
-    train_input = torch.transpose(train_input, 1, 2)
+    if model_name == "CNN":
+        train_input = torch.transpose(train_input, 1, 2)
     optimizer.zero_grad()
     out = model.forward(x=train_input)
     loss = criterion(out, train_target)
@@ -129,10 +130,10 @@ def __do_batch(batch_data, optimizer, model, criterion):
     return loss.item()
 
 
-def __do_epoch(epoch_num, list_of_batch, training_data_set, optimizer, model, criterion):
+def __do_epoch(epoch_num, list_of_batch, training_data_set, optimizer, model, criterion, model_name):
     sum_of_losses = 0
     for i, batch_data in enumerate(list_of_batch):
-        loss = __do_batch(batch_data=batch_data, optimizer=optimizer, model=model, criterion=criterion)
+        loss = __do_batch(batch_data=batch_data, optimizer=optimizer, model=model, criterion=criterion, model_name=model_name)
         # print(__msg, f"loss of batch {i + 1} / {len(list_of_batch)}: {loss}")
         sum_of_losses += loss
     # choose random sample and plot
@@ -153,7 +154,7 @@ def get_device():
 
 
 def train_neural_network(training_data_set, model, num_epochs, model_input_length, batch_size, optimizer, criterion,
-                         min_training_time_in_seconds=5):
+                         model_name, min_training_time_in_seconds=5):
     list_of_batch = __prepare_batches(
         training_data_set=training_data_set,
         model_input_length=model_input_length,
@@ -169,7 +170,7 @@ def train_neural_network(training_data_set, model, num_epochs, model_input_lengt
         epoch_start_time = time.time()
         sum_of_losses = __do_epoch(
             epoch_num=e, list_of_batch=list_of_batch, training_data_set=training_data_set, optimizer=optimizer,
-            model=model, criterion=criterion
+            model=model, criterion=criterion, model_name=model_name
         )
         if sum_of_losses < min_sum_of_losses:
             min_sum_of_losses = sum_of_losses
@@ -182,17 +183,18 @@ def train_neural_network(training_data_set, model, num_epochs, model_input_lengt
     return best_model
 
 
-def predict(ts_as_df_start, how_much_to_predict, best_model):
+def predict(ts_as_df_start, how_much_to_predict, best_model, model_name):
     with torch.no_grad():
         ts_as_np = ts_as_df_start["sample"].to_numpy()
         ts_as_tensor = __convert_np_array_to_pytorch_tensor(ts_as_np)[None, :, None].to(get_device())
         #if CNN
         for _ in range(how_much_to_predict):
             # if CNN
-            ts_as_tensor = torch.transpose(ts_as_tensor, 1, 2)
+            if model_name == "CNN":
+                ts_as_tensor = torch.transpose(ts_as_tensor, 1, 2)
             prediction = best_model.forward(ts_as_tensor)
-            # if CNN
-            ts_as_tensor = torch.transpose(ts_as_tensor, 1, 2)
+            if model_name == "CNN":
+                ts_as_tensor = torch.transpose(ts_as_tensor, 1, 2)
             ts_as_tensor = torch.cat([ts_as_tensor, prediction[None, :]], dim=1)
         prediction_flattened = ts_as_tensor.view(how_much_to_predict + len(ts_as_df_start)).cpu()
         y = prediction_flattened.detach().numpy()[-how_much_to_predict:]

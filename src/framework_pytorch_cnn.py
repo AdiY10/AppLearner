@@ -10,29 +10,33 @@ for now, we gonna set the Forecast Horizon to 1, for simplicity.
 
 
 class CNNPredictor(nn.Module):
-    def __init__(self, input_size, output_size, length_of_shortest_time_series):
+    def __init__(self, input_size, output_size, length_of_shortest_time_series, pooling_size, kernel_size, num_of_filters):
         super(CNNPredictor, self).__init__()
         self.__length_of_shortest_time_series = length_of_shortest_time_series
-        # seq_length = input_size.shape[2]
+        self.pooling_size = pooling_size
+        self.kernel_size = kernel_size
+        self.num_of_filters = num_of_filters
+        fully_connected_features = num_of_filters**2 * np.floor((np.floor((length_of_shortest_time_series-kernel_size+1)/pooling_size)-kernel_size+1)/pooling_size)
+        fully_connected_features = int(fully_connected_features)
+
         self.__seq_model = nn.Sequential(
-            nn.Conv1d(in_channels=input_size, out_channels=1, kernel_size=3, stride=1, padding=0),
+            nn.Conv1d(in_channels=input_size, out_channels=num_of_filters, kernel_size=kernel_size, stride=1, padding=0),
             nn.ReLU(),
-            nn.MaxPool1d(kernel_size=2),
-            nn.Conv1d(in_channels=1, out_channels=1, kernel_size=3, stride=1, padding=0),
+            nn.MaxPool1d(kernel_size=pooling_size),
+            nn.Conv1d(in_channels=num_of_filters, out_channels=num_of_filters**2, kernel_size=kernel_size, stride=1, padding=0),
             nn.ReLU(),
-            nn.MaxPool1d(kernel_size=2),
+            nn.MaxPool1d(kernel_size=pooling_size),
             nn.Flatten(),
             # the next line depends on the length of the minimal time series we need to change the 4
             # the 4 is because length of thr shortest time series is 23 and
             # 23->21->10->8->4 (2 layers of conv1d and 2 layers of pooling operation)
-            nn.Linear(in_features=4, out_features=20),
+
+            nn.Linear(in_features=fully_connected_features, out_features=20),
             nn.ReLU(),
             nn.Linear(in_features=20, out_features=output_size)
         )
 
     def forward(self, x):
-        print(self.__length_of_shortest_time_series)
-        print(x.shape)
         # use only the last "length_of_shortest_time_series" values of the time series
         x = x[:, :, -1*self.__length_of_shortest_time_series:]
         out = self.__seq_model(x)
@@ -44,8 +48,9 @@ class CNNPredictor(nn.Module):
 
 
 class PytorchCNNTester:
-    def __init__(self, length_of_shortest_time_series, metric, app):
+    def __init__(self, length_of_shortest_time_series, metric, app, model_name = "CNN"):
         # prepare parameters
+        self.model_name = model_name
         self.__msg = "[PytorchCNNTester]"
         self.__model_input_length = length_of_shortest_time_series // 2
         self.__model = CNNPredictor(
@@ -71,14 +76,16 @@ class PytorchCNNTester:
             model_input_length=self.__model_input_length,
             batch_size=64,
             criterion=self.__criterion,
-            optimizer=self.__optimizer
+            optimizer=self.__optimizer,
+            model_name=self.model_name
         )
 
     def predict(self, ts_as_df_start, how_much_to_predict):
         # ignore if CNN ?
         # self.__best_model.flatten_parameters()
         return pytorch__driver_for_test_bench.predict(
-            ts_as_df_start=ts_as_df_start, how_much_to_predict=how_much_to_predict, best_model=self.__best_model
+            ts_as_df_start=ts_as_df_start, how_much_to_predict=how_much_to_predict, best_model=self.__best_model,
+            model_name="CNN"
         )
 
 
