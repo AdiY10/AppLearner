@@ -8,6 +8,20 @@ creating CNN for time series prediction.
 for now, we gonna set the Forecast Horizon to 1, for simplicity.
 """
 
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--epochs', type=int, default=100, metavar='N', help='number of epochs')
+parser.add_argument('--batch_size', type=int, default=64, metavar='N', help='batch size')
+parser.add_argument('--save_num', type=int, default=7, metavar='N', help='number on the file to save')
+parser.add_argument('--integers', metavar='N', type=int, nargs='+',help='lr decay')
+parser.add_argument('--kernel', metavar='N', type=int, nargs='+',help='kernel sizes')
+parser.add_argument('--filter_num', type=int, default=16, metavar='N', help='number of filters')
+parser.add_argument('--pooling_size', type=int, default=1, metavar='N', help='number of filters')
+parser.add_argument('--lr', type=int, default=0.001, metavar='N', help='learning rate')
+
+args = parser.parse_args()
+print(args.kernel)
 
 class CNNPredictor(nn.Module):
     def __init__(self, input_size, output_size, length_of_shortest_time_series, pooling_size, kernel_size, num_of_filters):
@@ -16,25 +30,67 @@ class CNNPredictor(nn.Module):
         self.pooling_size = pooling_size
         self.kernel_size = kernel_size
         self.num_of_filters = num_of_filters
-        fully_connected_features = num_of_filters**2 * np.floor((np.floor((length_of_shortest_time_series-kernel_size+1)/pooling_size)-kernel_size+1)/pooling_size)
-        fully_connected_features = int(fully_connected_features)
 
-        self.__seq_model = nn.Sequential(
-            nn.Conv1d(in_channels=input_size, out_channels=num_of_filters, kernel_size=kernel_size, stride=1, padding=0),
-            nn.ReLU(),
-            nn.MaxPool1d(kernel_size=pooling_size),
-            nn.Conv1d(in_channels=num_of_filters, out_channels=num_of_filters**2, kernel_size=kernel_size, stride=1, padding=0),
-            nn.ReLU(),
-            nn.MaxPool1d(kernel_size=pooling_size),
-            nn.Flatten(),
+        # calculate the first fully connected layer size
+        fully_connected_features = length_of_shortest_time_series
+        for i in range(len(kernel_size)):
+            fully_connected_features = np.floor((fully_connected_features-kernel_size[i]+1)/pooling_size)
+        fully_connected_features = num_of_filters * int(fully_connected_features)
+
+        # build the model
+        for i in range(len(kernel_size)):
+            if i == 0:
+                self.__seq_model = nn.Sequential(
+                    nn.Conv1d(
+                        in_channels=input_size,
+                        out_channels=num_of_filters,
+                        kernel_size=kernel_size[i],
+                        stride=1,
+                        padding=0
+                    ),
+                    nn.ReLU(),
+                    nn.MaxPool1d(kernel_size=pooling_size),
+                )
+            else:
+                self.__seq_model.add_module(
+                    'conv' + str(i),
+                    module=nn.Conv1d(
+                        in_channels=num_of_filters,
+                        out_channels=num_of_filters,
+                        kernel_size=kernel_size[i],
+                        stride=1,
+                        padding=0
+                    )
+
+                )
+                self.__seq_model.add_module(
+                    'relu' + str(i),
+                    module=nn.ReLU()
+                )
+                self.__seq_model.add_module(
+                    'pool' + str(i),
+                    module=nn.MaxPool1d(kernel_size=pooling_size)
+                )
+
+        self.__seq_model.add_module('flatten', nn.Flatten())
+        self.__seq_model.add_module('linear1', module=nn.Linear(in_features=fully_connected_features, out_features=20))
+        self.__seq_model.add_module('relu_after_linear1', module=nn.ReLU())
+        self.__seq_model.add_module('linear2', module=nn.Linear(in_features=20, out_features=output_size))
+
+        # self.__seq_model = nn.Sequential(
+        #     nn.Conv1d(in_channels=input_size, out_channels=num_of_filters, kernel_size=kernel_size, stride=1, padding=0),
+        #     nn.ReLU(),
+        #     nn.MaxPool1d(kernel_size=pooling_size),
+        #     nn.Conv1d(in_channels=num_of_filters, out_channels=num_of_filters, kernel_size=kernel_size, stride=1, padding=0),
+        #     nn.ReLU(),
+        #     nn.MaxPool1d(kernel_size=pooling_size),
+        #     nn.Flatten(),
             # the next line depends on the length of the minimal time series we need to change the 4
             # the 4 is because length of thr shortest time series is 23 and
             # 23->21->10->8->4 (2 layers of conv1d and 2 layers of pooling operation)
+        #
 
-            nn.Linear(in_features=fully_connected_features, out_features=20),
-            nn.ReLU(),
-            nn.Linear(in_features=20, out_features=output_size)
-        )
+
 
     def forward(self, x):
         # use only the last "length_of_shortest_time_series" values of the time series
@@ -44,7 +100,6 @@ class CNNPredictor(nn.Module):
 
     def flatten_parameters(self):
         pass
-        # self.__seq_model[0].flatten_parameters()
 
 
 class PytorchCNNTester:
@@ -56,10 +111,13 @@ class PytorchCNNTester:
         self.__model = CNNPredictor(
             input_size=1,
             output_size=1,
-            length_of_shortest_time_series=self.__model_input_length
+            length_of_shortest_time_series=self.__model_input_length,
+            pooling_size=args.pooling_size,
+            kernel_size=args.kernel,
+            num_of_filters=args.filter_num
         ).to(pytorch__driver_for_test_bench.get_device())
         # Some Hyper-parameters
-        self.__optimizer = optim.Adam(self.__model.parameters(), lr=0.01)
+        self.__optimizer = optim.Adam(self.__model.parameters(), lr=0.001)
         self.__best_model = self.__model
         self.__criterion = nn.MSELoss()
         # prints
@@ -81,8 +139,6 @@ class PytorchCNNTester:
         )
 
     def predict(self, ts_as_df_start, how_much_to_predict):
-        # ignore if CNN ?
-        # self.__best_model.flatten_parameters()
         return pytorch__driver_for_test_bench.predict(
             ts_as_df_start=ts_as_df_start, how_much_to_predict=how_much_to_predict, best_model=self.__best_model,
             model_name="CNN"
