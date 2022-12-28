@@ -120,7 +120,9 @@ class TestBenchDeepAR:
         # max_encoder_length = max_encoder_length
         # max_prediction_length = max_prediction_length
 
-        training_cutoff = data["time_idx"].max() - max_prediction_length
+        validation_cutoff = data["time_idx"].max() - max_prediction_length
+        training_cutoff = data["time_idx"].max() - max_prediction_length*2
+
 
         context_length = max_encoder_length
         prediction_length = max_prediction_length
@@ -137,7 +139,8 @@ class TestBenchDeepAR:
             max_encoder_length=max_encoder_length, 
             max_prediction_length=max_prediction_length,
         )       
-        validation = TimeSeriesDataSet.from_dataset(training, data, min_prediction_idx=training_cutoff + 1)
+        validation = TimeSeriesDataSet.from_dataset(training, data[lambda x: x.time_idx<=validation_cutoff], min_prediction_idx=training_cutoff + 1)
+        test = TimeSeriesDataSet.from_dataset(training, data, min_prediction_idx=validation_cutoff + 1)
         batch_size = 128
         # synchronize samples in each batch over time - only necessary for DeepVAR, not for DeepAR
         # train_dataloader = DataLoader(training,batch_size=batch_size, batch_sampler=None,collate_fn=PadSequence())
@@ -148,7 +151,10 @@ class TestBenchDeepAR:
         val_dataloader = validation.to_dataloader(
             train=False, batch_size=batch_size, num_workers=0, batch_sampler= None #?
         )
-        return train_dataloader ,val_dataloader ,training ,validation
+        test_dataloader = test.to_dataloader(
+        train=False, batch_size=batch_size, num_workers=0, batch_sampler="synchronized" #?
+        )   
+        return train_dataloader ,val_dataloader, test_dataloader ,training ,validation, test
     
     def __preprocces(self, df, fix_len):
         x = []
@@ -261,7 +267,7 @@ class TestBenchDeepAR:
 
 
     def __do_one_test(self, dictionary):
-        metric, app, max_prediction_length  = dictionary["metric"], dictionary["app"], dictionary["prediction length"]
+        metric, app, max_prediction_length, plot  = dictionary["metric"], dictionary["app"], dictionary["prediction length"], dictionary["plot"]
         max_encoder_length = max_prediction_length*3 #TODO
         print(self.__msg, f"Fetching data for metric='{metric}', app='{app}'.")
         try:
@@ -269,7 +275,7 @@ class TestBenchDeepAR:
         except:
             dataset = self.__get_data(dictionary=dictionary)
             dataset.to_pickle(".\\dataset_{}.pkl".format(app))
-        train_dataloder, val_dataloader ,training ,validation = self.__to_dataloaders(dataset,max_encoder_length,max_prediction_length) #TODO insert as param
+        train_dataloder, val_dataloader ,test_dataloader, training ,validation, test = self.__to_dataloaders(dataset,max_encoder_length,max_prediction_length) #TODO insert as param
         print(self.__msg, "Making an instance of the class we want to test.")
         model = self.__get_model(training)
         print(self.__msg, "Starting training loop.")
@@ -279,10 +285,13 @@ class TestBenchDeepAR:
         training_time = training_stop_time - training_start_time
         print(self.__msg, f"Training took {training_time} seconds.")
         print(self.__msg, "Starting testing loop")
-        actuals, predictions = model.get_actuals_and_predictions(val_dataloader)
+        raw_predictions, x = model.predictions(train_dataloder, test_dataloader)
+        predictions = raw_predictions[0].mean(dim=2)
+        
+        actuals, predictions = model.get_actuals(test_dataloader)
         mse, precision, recall, f1, mase, mape = self.__get_mse_precision_recall_f1_mase_and_mape(actuals, predictions)
-        raw_predictions, x = model.predictions(train_dataloder, val_dataloader)
-        model.plot_predictions(raw_predictions, x, validation)
+        if(plot):
+            model.plot_predictions(raw_predictions, x, test)
         self.__print_report(
             metric=metric, app=app, mse=mse, precision=precision, recall=recall, f1=f1,
             training_time=training_time, mase=mase, mape=mape
@@ -333,8 +342,8 @@ def main(test_to_perform):
 if __name__ == "__main__":
     test_to_perform = [
         # Container CPU
-        {"metric": "container_cpu", "app": "kube-rbac-proxy", "prediction length": 20, "sub sample rate": 5,
-         "data length limit": 30, "fixed length of samples": 100}
+        # {"metric": "container_cpu", "app": "kube-rbac-proxy", "prediction length": 20, "sub sample rate": 5,
+        #  "data length limit": 30, "fixed length of samples": 100, "plot": True}
         # {"metric": "container_cpu", "app": "dns", "prediction length": 20, "sub sample rate": 30,
         #  "data length limit": 30},
         # {"metric": "container_cpu", "app": "collector", "prediction length": 20, "sub sample rate": 30,

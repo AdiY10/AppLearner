@@ -72,7 +72,7 @@ class DeepARTester:
         # net = self.__model.from_dataset(train_dataloader)
         early_stop_callback = EarlyStopping(monitor="train_loss", min_delta=1e-4, patience=10, verbose=False, mode="min")
         trainer = pl.Trainer(
-            max_epochs=10,
+            max_epochs=30,
             gpus=0,
             enable_model_summary=True,
             gradient_clip_val=0.1,
@@ -90,13 +90,13 @@ class DeepARTester:
         self.__best_model = best_model
         return best_model #TODO maybe delete
 
-    def get_actuals_and_predictions(self, val_dataloader):
-        actuals = torch.cat([y[0] for x, y in iter(val_dataloader)])
-        predictions = self.__best_model.predict(val_dataloader)
+    def get_actuals(self, test_dataloader):
+        actuals = torch.cat([y[0] for x, y in iter(test_dataloader)])
+        predictions = self.__best_model.predict(test_dataloader)
         return actuals, predictions
 
-    def predictions(self,train_dataloader,val_dataloader):
-        raw_predictions, x = self.__best_model.predict(val_dataloader, mode="raw", return_x=True, n_samples=100)
+    def predictions(self,train_dataloader,test_dataloader):
+        raw_predictions, x = self.__best_model.predict(test_dataloader, mode="raw", return_x=True, n_samples=100)
         return raw_predictions, x
     
     def plot_predictions(self, raw_predictions, x, validation):
