@@ -12,6 +12,7 @@ import random
 import math
 import framework__test_bench as framework__test_bench
 import time
+import torch.optim.lr_scheduler as lr_scheduler
 
 """
 ***********************************************************************************************************************
@@ -154,7 +155,7 @@ def get_device():
 
 
 def train_neural_network(training_data_set, model, num_epochs, model_input_length, batch_size, optimizer, criterion,
-                         model_name, min_training_time_in_seconds=5):
+                         model_name, min_training_time_in_seconds=5, save_num=0, lr_decay=[]):
     list_of_batch = __prepare_batches(
         training_data_set=training_data_set,
         model_input_length=model_input_length,
@@ -164,7 +165,10 @@ def train_neural_network(training_data_set, model, num_epochs, model_input_lengt
     training_start_time = time.time()
     min_sum_of_losses = float('inf')
     best_model = copy.deepcopy(model)
+    scheduler = lr_scheduler.ExponentialLR(optimizer, gamma=0.5)
     for e in range(99999999):
+        if e in lr_decay:
+            scheduler.step()
         if (e >= num_epochs) and (time.time() - training_start_time > min_training_time_in_seconds):
             break
         epoch_start_time = time.time()
@@ -180,6 +184,9 @@ def train_neural_network(training_data_set, model, num_epochs, model_input_lengt
         epoch_time = epoch_stop_time - epoch_start_time
         avg_loss = sum_of_losses / len(list_of_batch)
         print(__msg, f"Epoch {e + 1} done. Epoch time was {epoch_time}. Average loss for the batches in epoch is {avg_loss}")
+    # save the model
+    torch.save(best_model.state_dict(), f"./weights" + str(save_num) + ".pth")
+
     return best_model
 
 

@@ -12,9 +12,7 @@ from datetime import datetime, timedelta
 from os import listdir
 from os.path import isfile, join
 import numpy as np
-from darts.datasets import (AirPassengersDataset, MonthlyMilkDataset,
-                            AusBeerDataset, GasRateCO2Dataset, WoolyDataset, ElectricityDataset)
-# from darts.models.filtering.kalman_filter import KalmanFilter
+
 
 """
 ***********************************************************************************************************************
@@ -413,25 +411,6 @@ def get_amount_of_data_per_application(metric, path_to_data):
 
 
 def main():
-    # ts1 = AirPassengersDataset().load()
-    # ts2 = WoolyDataset().load()
-    # ts3 = AusBeerDataset().load()
-    # ts4 = GasRateCO2Dataset().load()
-    # ts5 = ElectricityDataset().load()
-    # ts6 = MonthlyMilkDataset().load()
-    # ts1.plot()
-    # plt.show()
-    # ts2.plot()
-    # plt.show()
-    # ts3.plot()
-    # plt.show()
-    # ts4.plot()
-    # plt.show()
-    # ts5.plot()
-    # plt.show()
-    # ts6.plot()
-    # plt.show()
-    # exit()
     print("Start.")
     length_to_predict = 4
     test = 0

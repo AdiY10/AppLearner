@@ -1,30 +1,43 @@
 import torch.nn as nn
 import torch.optim as optim
+import torch
 import numpy as np
 import pytorch__driver_for_test_bench as pytorch__driver_for_test_bench
 
 """
 creating CNN for time series prediction.
-for now, we gonna set the Forecast Horizon to 1, for simplicity.
 """
+
+
 
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--epochs', type=int, default=100, metavar='N', help='number of epochs')
+parser.add_argument('--epochs', type=int, default=30, metavar='N', help='number of epochs')
 parser.add_argument('--batch_size', type=int, default=64, metavar='N', help='batch size')
-parser.add_argument('--save_num', type=int, default=7, metavar='N', help='number on the file to save')
+parser.add_argument('--save_num', type=int, default=1, metavar='N', help='number on the file to save')
 parser.add_argument('--integers', metavar='N', type=int, nargs='+',help='lr decay')
 parser.add_argument('--kernel', metavar='N', type=int, nargs='+',help='kernel sizes')
 parser.add_argument('--filter_num', type=int, default=16, metavar='N', help='number of filters')
-parser.add_argument('--pooling_size', type=int, default=1, metavar='N', help='number of filters')
-parser.add_argument('--lr', type=int, default=0.001, metavar='N', help='learning rate')
+parser.add_argument('--pooling_size', type=int, default=1, metavar='N', help='pooling size')
+parser.add_argument('--lr', type=float, default=0.0001, metavar='N', help='learning rate')
+parser.add_argument('--seed', type=int, default=0, metavar='N', help='seed')
+parser.add_argument("--overparam", type=bool, default=False, help="more parameters")
 
 args = parser.parse_args()
-print(args.kernel)
+
+
+with open('params_' + str(args.save_num) + '.txt', 'w') as f:
+    f.write("epochs = "+str(args.epochs) + '\n' + "batch size = "+str(args.batch_size) + '\n' + "kernel = "+str(args.kernel)
+            + '\n' + "number of filter = "+str(args.filter_num) + '\n' + "pooling size = "+str(args.pooling_size) + '\n'
+            + "learning rate = "+str(args.lr) + '\n' + "lr decay at epochs: "+str(args.integers) + '\n' + "seed = "+str(args.seed))
+
+np.random.seed(args.seed)
+torch.manual_seed(args.seed)
 
 class CNNPredictor(nn.Module):
-    def __init__(self, input_size, output_size, length_of_shortest_time_series, pooling_size, kernel_size, num_of_filters):
+    def __init__(self, input_size, output_size, length_of_shortest_time_series, pooling_size,
+                 kernel_size, num_of_filters, overparam=False):
         super(CNNPredictor, self).__init__()
         self.__length_of_shortest_time_series = length_of_shortest_time_series
         self.pooling_size = pooling_size
@@ -73,23 +86,22 @@ class CNNPredictor(nn.Module):
                 )
 
         self.__seq_model.add_module('flatten', nn.Flatten())
-        self.__seq_model.add_module('linear1', module=nn.Linear(in_features=fully_connected_features, out_features=20))
-        self.__seq_model.add_module('relu_after_linear1', module=nn.ReLU())
-        self.__seq_model.add_module('linear2', module=nn.Linear(in_features=20, out_features=output_size))
-
-        # self.__seq_model = nn.Sequential(
-        #     nn.Conv1d(in_channels=input_size, out_channels=num_of_filters, kernel_size=kernel_size, stride=1, padding=0),
-        #     nn.ReLU(),
-        #     nn.MaxPool1d(kernel_size=pooling_size),
-        #     nn.Conv1d(in_channels=num_of_filters, out_channels=num_of_filters, kernel_size=kernel_size, stride=1, padding=0),
-        #     nn.ReLU(),
-        #     nn.MaxPool1d(kernel_size=pooling_size),
-        #     nn.Flatten(),
-            # the next line depends on the length of the minimal time series we need to change the 4
-            # the 4 is because length of thr shortest time series is 23 and
-            # 23->21->10->8->4 (2 layers of conv1d and 2 layers of pooling operation)
-        #
-
+        if not overparam:
+            self.__seq_model.add_module('linear1', module=nn.Linear(in_features=fully_connected_features, out_features=20))
+            self.__seq_model.add_module('relu_after_linear1', module=nn.ReLU())
+            self.__seq_model.add_module('linear2', module=nn.Linear(in_features=20, out_features=output_size))
+        else:
+            self.__seq_model.add_module('linear1', module=nn.Linear(in_features=fully_connected_features, out_features=1500))
+            self.__seq_model.add_module('relu_after_linear1', module=nn.ReLU())
+            self.__seq_model.add_module('linear2', module=nn.Linear(in_features=1500, out_features=1000))
+            self.__seq_model.add_module('relu_after_linear2', module=nn.ReLU())
+            self.__seq_model.add_module('linear3', module=nn.Linear(in_features=1000, out_features=500))
+            self.__seq_model.add_module('relu_after_linear3', module=nn.ReLU())
+            self.__seq_model.add_module('linear4', module=nn.Linear(in_features=500, out_features=100))
+            self.__seq_model.add_module('relu_after_linear4', module=nn.ReLU())
+            self.__seq_model.add_module('linear5', module=nn.Linear(in_features=100, out_features=20))
+            self.__seq_model.add_module('relu_after_linear5', module=nn.ReLU())
+            self.__seq_model.add_module('linear6', module=nn.Linear(in_features=20, out_features=output_size))
 
 
     def forward(self, x):
@@ -114,10 +126,11 @@ class PytorchCNNTester:
             length_of_shortest_time_series=self.__model_input_length,
             pooling_size=args.pooling_size,
             kernel_size=args.kernel,
-            num_of_filters=args.filter_num
+            num_of_filters=args.filter_num,
+            overparam=args.overparam
         ).to(pytorch__driver_for_test_bench.get_device())
         # Some Hyper-parameters
-        self.__optimizer = optim.Adam(self.__model.parameters(), lr=0.001)
+        self.__optimizer = optim.Adam(self.__model.parameters(), lr=args.lr)
         self.__best_model = self.__model
         self.__criterion = nn.MSELoss()
         # prints
@@ -130,12 +143,14 @@ class PytorchCNNTester:
         self.__best_model = pytorch__driver_for_test_bench.train_neural_network(
             training_data_set=training_data_set,
             model=self.__model,
-            num_epochs=10,
+            num_epochs=args.epochs,
             model_input_length=self.__model_input_length,
-            batch_size=64,
+            batch_size=args.batch_size,
             criterion=self.__criterion,
             optimizer=self.__optimizer,
-            model_name=self.model_name
+            model_name=self.model_name,
+            save_num=args.save_num,
+            lr_decay=args.integers
         )
 
     def predict(self, ts_as_df_start, how_much_to_predict):
@@ -143,6 +158,9 @@ class PytorchCNNTester:
             ts_as_df_start=ts_as_df_start, how_much_to_predict=how_much_to_predict, best_model=self.__best_model,
             model_name="CNN"
         )
+
+    def get_input_length(self):
+        return self.__model_input_length
 
 
 """
@@ -157,7 +175,9 @@ def main(test_to_perform):
     tb = framework__test_bench.TestBench(
         class_to_test=PytorchCNNTester,
         path_to_data="../data/",
-        tests_to_perform=test_to_perform
+        tests_to_perform=test_to_perform,
+        model_name="CNN",
+        number_to_save=args.save_num
     )
     tb.run_training_and_tests()
 
@@ -165,9 +185,9 @@ def main(test_to_perform):
 if __name__ == "__main__":
     test_to_perform = (
         # Container CPU
-        {"metric": "container_cpu", "app": "collector", "prediction length": 5, "sub sample rate": 5,
-         "data length limit": 50},
-        {"metric": "container_cpu", "app": "dns", "prediction length": 16, "sub sample rate": 30,
-         "data length limit": 30}
+        {"metric": "container_cpu", "app": "dns", "prediction length": 10, "sub sample rate": 5,
+         "data length limit": 60},
+        {"metric": "container_cpu", "app": "dns", "prediction length": 10, "sub sample rate": 5,
+         "data length limit": 60}
     )
     main(test_to_perform)

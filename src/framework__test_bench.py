@@ -22,13 +22,18 @@ from framework__data_set import get_data_set
 """
 
 
-def plot_result(original, prediction_as_np_array):
+def plot_result(original, prediction_as_np_array, using):
     original_as_series = original["sample"].copy()
     predicted_as_series = pd.Series(prediction_as_np_array)
     x_axis = [time for time in original["time"]]
     original_as_series.index = x_axis
-    predicted_as_series.index = x_axis[-len(prediction_as_np_array):]
+
+    # new_original_as_series = original_as_series[-(len(prediction_as_np_array)*2):]
+    # new_original_as_series.index = x_axis[-(len(prediction_as_np_array)*2):]
+
+    predicted_as_series.index = x_axis[using:using+len(prediction_as_np_array)]
     ax = original_as_series.plot(color="blue", label="Samples")
+    # ax = new_original_as_series.plot(color="blue", label="Samples")
     predicted_as_series.plot(ax=ax, color="red", label="Predictions")
     plt.legend()
     plt.show()
@@ -52,11 +57,13 @@ class TestBench:
             class_to_test,
             path_to_data,
             tests_to_perform,
-            model_name = "CNN"
+            model_name = "CNN",
+            number_to_save = 1
     ):
         self.model_name = model_name
         self.__class_to_test = class_to_test
         self.__path_to_data = path_to_data
+        self.number_to_save = number_to_save
         for dictionary in tests_to_perform:
             assert "metric" in dictionary
             assert "app" in dictionary
@@ -193,28 +200,48 @@ class TestBench:
         @return: mse, precision, recall, f1, mase of the test sample
         """
         assert self.length_to_predict < len(test_sample)
+
+        using = model.get_input_length()
+        assert using < len(test_sample)
         how_much_to_predict = self.length_to_predict
         how_much_to_give = len(test_sample) - how_much_to_predict
+
         returned_ts_as_np_array = model.predict(
-            ts_as_df_start=test_sample[: how_much_to_give],
-            how_much_to_predict=how_much_to_predict
-        )
+            ts_as_df_start=test_sample[: using],
+            how_much_to_predict=how_much_to_predict)
+
+        first_returned_ts_as_np_array = returned_ts_as_np_array
+
+        for i in range(1000):
+            if len(test_sample) <= using + how_much_to_predict*(i+2):
+                break
+            returned_ts_as_np_array = np.concatenate((returned_ts_as_np_array, model.predict(
+                ts_as_df_start=test_sample[: using + how_much_to_predict*(i+1)],
+                how_much_to_predict=how_much_to_predict
+            )))
+
+        # returned_ts_as_np_array = model.predict(
+        #     ts_as_df_start=test_sample[: how_much_to_give],
+        #     how_much_to_predict=how_much_to_predict
+        # )
         # make sure the output is in the right format
         assert isinstance(returned_ts_as_np_array, np.ndarray)
-        assert len(returned_ts_as_np_array) == how_much_to_predict
-        assert returned_ts_as_np_array.shape == (how_much_to_predict,)
+        # assert len(returned_ts_as_np_array) == how_much_to_predict
+        # assert returned_ts_as_np_array.shape == (how_much_to_predict,)
         assert returned_ts_as_np_array.dtype == np.float64
         # plot if needed
         if should_print:
             plot_result(
                 original=test_sample,
                 prediction_as_np_array=returned_ts_as_np_array,
+                using=using
             )
         out_should_be = test_sample["sample"].to_numpy()
         mse_here, precision, recall, f1, mase, mape = self.__get_mse_precision_recall_f1_mase_and_mape(
-            y_true=out_should_be[how_much_to_give:], y_pred=returned_ts_as_np_array,
+            y_true=out_should_be[how_much_to_give:], y_pred=first_returned_ts_as_np_array,
             y_train=out_should_be[:how_much_to_give]
         )
+
         return mse_here, precision, recall, f1, mase, mape
 
     def __print_report(self, metric, app, mse, precision, recall, f1, training_time, mase, mape, as_table=False):
@@ -231,6 +258,13 @@ class TestBench:
         @param mape:
         @param as_table: whether to print as a table or not.
         """
+        number = self.number_to_save
+        with open('results' + str(number) + '.txt', 'w') as f:
+            f.write("Average mse over the test set is = " + str(mse) + '\n' + "Average MASE over the test set is = " + str(
+                mase) + '\n' + "Average MAPE over the test set is = " + str(mape))
+        # exit(0)
+
+
         if as_table:
             print(self.__msg,
                   f"| {metric} | {app} | {round(training_time)} seconds   | {round(mse, 5)} | {round(precision, 5)} | {round(recall, 5)} | {round(f1, 5)}  | {round(mase, 5)} | {round(mape, 5)} |")

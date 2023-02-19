@@ -108,7 +108,7 @@ class PytorchLSTMTester:
         self.__best_model = pytorch__driver_for_test_bench.train_neural_network(
             training_data_set=training_data_set,
             model=self.__model,
-            num_epochs=10,
+            num_epochs=9,
             model_input_length=self.__model_input_length,
             batch_size=64,
             criterion=self.__criterion,
@@ -151,8 +151,8 @@ def main(test_to_perform):
 if __name__ == "__main__":
     test_to_perform = (
         # Container CPU
-        {"metric": "container_cpu", "app": "collector", "prediction length": 5, "sub sample rate": 5,
-         "data length limit": 50},
+        {"metric": "container_cpu", "app": "dns", "prediction length": 10, "sub sample rate": 5,
+         "data length limit": 60},
         {"metric": "container_cpu", "app": "dns", "prediction length": 16, "sub sample rate": 30,
          "data length limit": 30}
         # {"metric": "container_cpu", "app": "collector", "prediction length": 16, "sub sample rate": 30,
