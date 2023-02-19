@@ -95,10 +95,12 @@ class TimeSeriesDataSet:
         """
         samples = random.sample(self.__list_of_df, k=number_of_samples)
         for df in samples:
+            title = df.iloc[0, 2:5].str.cat(sep=', ')
             # plt.close("all")
             ts = df["sample"].copy()
             ts.index = [time for time in df["time"]]
             ts.plot()
+            plt.title(title)
             plt.show()
 
     def scale_data(self):
@@ -181,7 +183,7 @@ def __get_app_name_from_key(key: str):
     namespace = key.split(", ")[1]
     node = key.split(", ")[2]
     pod = key.split(", ")[3]
-    return app_name
+    return [app_name, namespace, node, pod]
 
 
 def __get_data_as_list_of_df_from_file(data_dict, application_name):
@@ -193,10 +195,12 @@ def __get_data_as_list_of_df_from_file(data_dict, application_name):
     @return: time series of a specified application name from a data dictionary
     """
     result_list = []
-    relevant_keys = [k for k in data_dict.keys() if (application_name == __get_app_name_from_key(key=k))]
+    relevant_keys = [k for k in data_dict.keys() if (application_name == __get_app_name_from_key(key=k)[0])]
+    # relevant_keys = [k for k in data_dict.keys() if (application_name == __get_app_name_from_key(key=k)[0] and 'collector-krg9f' == __get_app_name_from_key(key=k)[3]) ]
     for k in relevant_keys:
         list_of_ts = data_dict[k]
         for time_series in list_of_ts:
+            application_name, namespace, node, pod = __get_app_name_from_key(key=k)
             start_time = datetime.strptime(time_series["start"], "%Y-%m-%d %H:%M:%S")
             stop_time = datetime.strptime(time_series["stop"], "%Y-%m-%d %H:%M:%S")
             date_time_range = [start_time + timedelta(minutes=i) for i in range(len(time_series["data"]))]
@@ -204,7 +208,11 @@ def __get_data_as_list_of_df_from_file(data_dict, application_name):
             time_series_as_df = pd.DataFrame(
                 {
                     "sample": time_series["data"],
-                    "time": date_time_range
+                    "time": date_time_range,
+                    "application_name": application_name,
+                    "node": node,
+                    "pod": pod,
+                    "namespace": namespace
                 },
                 # index=date_time_range
             )
@@ -270,7 +278,7 @@ def get_amount_of_data_per_application(metric, path_to_data):
         with open(f'{path_to_data}{file_name}') as json_file:
             data_dict = json.load(json_file)
             for k in data_dict.keys():
-                app_name = __get_app_name_from_key(key=k)
+                app_name = __get_app_name_from_key(key=k)[0]
                 # count number of time series samples
                 amount_of_data = 0
                 for ts in data_dict[k]:
