@@ -22,7 +22,7 @@ from framework__data_set import get_data_set
 """
 
 
-def plot_result(original, prediction_as_np_array, using):
+def plot_result_ongoing(original, prediction_as_np_array, using):
     original_as_series = original["sample"].copy()
     predicted_as_series = pd.Series(prediction_as_np_array)
     x_axis = [time for time in original["time"]]
@@ -34,6 +34,17 @@ def plot_result(original, prediction_as_np_array, using):
     predicted_as_series.index = x_axis[using:using+len(prediction_as_np_array)]
     ax = original_as_series.plot(color="blue", label="Samples")
     # ax = new_original_as_series.plot(color="blue", label="Samples")
+    predicted_as_series.plot(ax=ax, color="red", label="Predictions")
+    plt.legend()
+    plt.show()
+
+def plot_result(original, prediction_as_np_array):
+    original_as_series = original["sample"].copy()
+    predicted_as_series = pd.Series(prediction_as_np_array)
+    x_axis = [time for time in original["time"]]
+    original_as_series.index = x_axis
+    predicted_as_series.index = x_axis[-len(prediction_as_np_array):]
+    ax = original_as_series.plot(color="blue", label="Samples")
     predicted_as_series.plot(ax=ax, color="red", label="Predictions")
     plt.legend()
     plt.show()
@@ -56,14 +67,10 @@ class TestBench:
             self,
             class_to_test,
             path_to_data,
-            tests_to_perform,
-            model_name = "CNN",
-            number_to_save = 1
+            tests_to_perform
     ):
-        self.model_name = model_name
         self.__class_to_test = class_to_test
         self.__path_to_data = path_to_data
-        self.number_to_save = number_to_save
         for dictionary in tests_to_perform:
             assert "metric" in dictionary
             assert "app" in dictionary
@@ -101,6 +108,44 @@ class TestBench:
         dataset.sub_sample_data(sub_sample_rate=ss_rate)
         print(self.__msg, f"Throwing out data that is less than {dl_limit * ss_rate / 60} hours long.")
         dataset.filter_data_that_is_too_short(data_length_limit=dl_limit)
+        print(self.__msg, "Scaling data.")
+        dataset.scale_data()
+        print(self.__msg, "Splitting data into train and test.")
+        train, test = dataset.split_to_train_and_test(length_to_predict=self.length_to_predict)
+        assert len(train) == len(test)
+        assert min([len(df) for df in train] + [len(df) for df in test]) >= (dl_limit - self.length_to_predict)
+        print(self.__msg, f"Amount of train/test data is {len(train)}.")
+        return train, test
+
+    def __get_model(self, metric, app, train, test):
+        length_of_shortest_time_series = min([len(df) for df in train] + [len(df) for df in test])
+        model = self.__class_to_test(
+            length_of_shortest_time_series=length_of_shortest_time_series,
+            metric=metric,
+            app=app
+        )
+        return model
+
+
+    def __get_data_CNN(self, dictionary):
+        """
+        @param dictionary: a specified test (keys are the definitions of the tests: the metrics, app name and more)
+        @return: train and test datasets
+        """
+        metric = dictionary["metric"]
+        app = dictionary["app"]
+        ss_rate = dictionary["sub sample rate"]
+        dl_limit = dictionary["data length limit"]
+        self.length_to_predict = dictionary["prediction length"]
+        dataset = get_data_set(
+            metric=metric,
+            application_name=app,
+            path_to_data=self.__path_to_data
+        )
+        print(self.__msg, f"Subsampling data from 1 sample per 1 minute to 1 sample per {ss_rate} minutes.")
+        dataset.sub_sample_data(sub_sample_rate=ss_rate)
+        print(self.__msg, f"Throwing out data that is less than {dl_limit * ss_rate / 60} hours long.")
+        dataset.filter_data_that_is_too_short(data_length_limit=dl_limit)
         print(self.__msg, f"Cleaning zeros.")
         dataset.filter_series_with_zeros()
         print(self.__msg, f"Throwing out data that is less than {dl_limit * ss_rate / 60} hours long.")
@@ -119,13 +164,15 @@ class TestBench:
         return train, test
 
     def __get_model(self, metric, app, train, test):
-        length_of_shortest_time_series = min([len(df) for df in train] + [len(df) for df in test]) # concatenate
+        length_of_shortest_time_series = min([len(df) for df in train] + [len(df) for df in test])
         model = self.__class_to_test(
             length_of_shortest_time_series=length_of_shortest_time_series,
             metric=metric,
             app=app
         )
         return model
+
+
 
     """
     *******************************************************************************************************************
@@ -191,7 +238,42 @@ class TestBench:
 
         return mse_here, precision, recall, f1, mase, mape
 
+
     def __give_one_test_to_model(self, test_sample, model, should_print):
+        """
+
+        @param test_sample:  test sample
+        @param model: the model we're training
+        @param should_print: true if we want to plot
+        @return: mse, precision, recall, f1, mase of the test sample
+        """
+        assert self.length_to_predict < len(test_sample)
+        how_much_to_predict = self.length_to_predict
+        how_much_to_give = len(test_sample) - how_much_to_predict
+        returned_ts_as_np_array = model.predict(
+            ts_as_df_start=test_sample[: how_much_to_give],
+            how_much_to_predict=how_much_to_predict
+        )
+        # make sure the output is in the right format
+        assert isinstance(returned_ts_as_np_array, np.ndarray)
+        assert len(returned_ts_as_np_array) == how_much_to_predict
+        assert returned_ts_as_np_array.shape == (how_much_to_predict,)
+        assert returned_ts_as_np_array.dtype == np.float64
+        # plot if needed
+        if should_print:
+            plot_result(
+                original=test_sample,
+                prediction_as_np_array=returned_ts_as_np_array,
+            )
+        out_should_be = test_sample["sample"].to_numpy()
+        mse_here, precision, recall, f1, mase, mape = self.__get_mse_precision_recall_f1_mase_and_mape(
+            y_true=out_should_be[how_much_to_give:], y_pred=returned_ts_as_np_array,
+            y_train=out_should_be[:how_much_to_give]
+        )
+        return mse_here, precision, recall, f1, mase, mape
+
+
+    def __give_one_test_to_model_CNN(self, test_sample, model, should_print):
         """
 
         @param test_sample:  test sample
@@ -231,7 +313,7 @@ class TestBench:
         assert returned_ts_as_np_array.dtype == np.float64
         # plot if needed
         if should_print:
-            plot_result(
+            plot_result_ongoing(
                 original=test_sample,
                 prediction_as_np_array=returned_ts_as_np_array,
                 using=using
@@ -258,13 +340,6 @@ class TestBench:
         @param mape:
         @param as_table: whether to print as a table or not.
         """
-        number = self.number_to_save
-        with open('results' + str(number) + '.txt', 'w') as f:
-            f.write("Average mse over the test set is = " + str(mse) + '\n' + "Average MASE over the test set is = " + str(
-                mase) + '\n' + "Average MAPE over the test set is = " + str(mape))
-        # exit(0)
-
-
         if as_table:
             print(self.__msg,
                   f"| {metric} | {app} | {round(training_time)} seconds   | {round(mse, 5)} | {round(precision, 5)} | {round(recall, 5)} | {round(f1, 5)}  | {round(mase, 5)} | {round(mape, 5)} |")
@@ -294,7 +369,6 @@ class TestBench:
         total_mase = 0
         total_mape = 0
         for i, test_sample in enumerate(test):
-
             mse_here, precision, recall, f1, mase, mape = self.__give_one_test_to_model(
                 test_sample=test_sample, model=model, should_print=(i < 10)
             )
@@ -316,6 +390,28 @@ class TestBench:
         metric, app = dictionary["metric"], dictionary["app"]
         print(self.__msg, f"Fetching data for metric='{metric}', app='{app}'.")
         train, test = self.__get_data(dictionary=dictionary)
+        print(self.__msg, "Making an instance of the class we want to test.")
+        model = self.__get_model(metric=metric, app=app, train=train, test=test)
+        print(self.__msg, "Starting training loop.")
+        training_start_time = time.time()
+        model.learn_from_data_set(training_data_set=train)
+        training_stop_time = time.time()
+        training_time = training_stop_time - training_start_time
+        print(self.__msg, f"Training took {training_time} seconds.")
+        print(self.__msg, "Starting testing loop")
+        mse, precision, recall, f1, mase, mape = self.__test_model(test=test, model=model)
+        self.__print_report(
+            metric=metric, app=app, mse=mse, precision=precision, recall=recall, f1=f1,
+            training_time=training_time, mase=mase, mape=mape
+        )
+        print(self.__msg, f"Done with metric='{metric}', app='{app}'")
+        return mse, precision, recall, f1, training_time, mase, mape
+
+
+    def __do_one_test_CNN(self, dictionary):
+        metric, app = dictionary["metric"], dictionary["app"]
+        print(self.__msg, f"Fetching data for metric='{metric}', app='{app}'.")
+        train, test = self.__get_data_CNN(dictionary=dictionary)
         print(self.__msg, "Making an instance of the class we want to test.")
         model = self.__get_model(metric=metric, app=app, train=train, test=test)
         print(self.__msg, "Starting training loop.")
@@ -369,6 +465,21 @@ class TestBench:
             metric = dictionary["metric"]
             print(self.__msg, f"testing metric='{metric}', app='{app}'.")
             mse, precision, recall, f1, training_time, mase, mape = self.__do_one_test(dictionary=dictionary)
+            full_report += [(mse, precision, recall, f1, training_time, mase, mape)]
+        assert len(full_report) == len(self.__tests_to_perform)
+        self.print_table_of_results(full_report=full_report)
+        # self.print_device_information()
+        print(self.__msg, "Powering off test bench")
+
+
+    def run_training_and_tests_CNN(self):
+        print(self.__msg, "Powering on test bench")
+        full_report = []
+        for dictionary in self.__tests_to_perform:
+            app = dictionary["app"]
+            metric = dictionary["metric"]
+            print(self.__msg, f"testing metric='{metric}', app='{app}'.")
+            mse, precision, recall, f1, training_time, mase, mape = self.__do_one_test_CNN(dictionary=dictionary)
             full_report += [(mse, precision, recall, f1, training_time, mase, mape)]
         assert len(full_report) == len(self.__tests_to_perform)
         self.print_table_of_results(full_report=full_report)
@@ -450,12 +561,4 @@ if __name__ == "__main__":
         {"metric": "node_mem", "app": "emea/balrog", "prediction length": 16, "sub sample rate": 30,
          "data length limit": 30}
     )
-
-    real_test_to_perform = (
-        # Container CPU
-        {"metric": "container_cpu", "app": "kube-rbac-proxy", "prediction length": 16, "sub sample rate": 10,
-         "data length limit": 80},
-        {"metric": "container_cpu", "app": "dns", "prediction length": 16, "sub sample rate": 30,
-         "data length limit": 30},
-    )
-    main(real_test_to_perform)
+    main(test_to_perform)

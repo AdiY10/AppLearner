@@ -140,7 +140,7 @@ class PytorchCNNTester:
 
 
     def learn_from_data_set(self, training_data_set):
-        self.__best_model = pytorch__driver_for_test_bench.train_neural_network(
+        self.__best_model = pytorch__driver_for_test_bench.train_neural_network_CNN(
             training_data_set=training_data_set,
             model=self.__model,
             num_epochs=args.epochs,
@@ -148,13 +148,10 @@ class PytorchCNNTester:
             batch_size=args.batch_size,
             criterion=self.__criterion,
             optimizer=self.__optimizer,
-            model_name=self.model_name,
-            save_num=args.save_num,
-            lr_decay=args.integers
         )
 
     def predict(self, ts_as_df_start, how_much_to_predict):
-        return pytorch__driver_for_test_bench.predict(
+        return pytorch__driver_for_test_bench.predict_CNN(
             ts_as_df_start=ts_as_df_start, how_much_to_predict=how_much_to_predict, best_model=self.__best_model,
             model_name="CNN"
         )
@@ -176,10 +173,8 @@ def main(test_to_perform):
         class_to_test=PytorchCNNTester,
         path_to_data="../data/",
         tests_to_perform=test_to_perform,
-        model_name="CNN",
-        number_to_save=args.save_num
     )
-    tb.run_training_and_tests()
+    tb.run_training_and_tests_CNN()
 
 
 if __name__ == "__main__":
