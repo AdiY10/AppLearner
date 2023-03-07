@@ -12,7 +12,6 @@ from datetime import datetime, timedelta
 from os import listdir
 from os.path import isfile, join
 import numpy as np
-import seaborn as sns
 
 """
 ***********************************************************************************************************************
@@ -102,7 +101,6 @@ class TimeSeriesDataSet:
             ts.plot()
             plt.show()
 
-
     def scale_data(self):
         """
         rescaling the distribution of values so that the mean of observed values is 0, and the std is 1.
@@ -180,6 +178,9 @@ def __get_app_name_from_key(key: str):
     @return: the name of the app
     """
     app_name = key.split(", ")[0]
+    namespace = key.split(", ")[1]
+    node = key.split(", ")[2]
+    pod = key.split(", ")[3]
     return app_name
 
 
@@ -193,7 +194,6 @@ def __get_data_as_list_of_df_from_file(data_dict, application_name):
     """
     result_list = []
     relevant_keys = [k for k in data_dict.keys() if (application_name == __get_app_name_from_key(key=k))]
-    j = 0
     for k in relevant_keys:
         list_of_ts = data_dict[k]
         for time_series in list_of_ts:
@@ -204,13 +204,10 @@ def __get_data_as_list_of_df_from_file(data_dict, application_name):
             time_series_as_df = pd.DataFrame(
                 {
                     "sample": time_series["data"],
-                    "series": j,
                     "time": date_time_range
                 },
                 # index=date_time_range
             )
-            j+=1
-            time_series_as_df['time_idx'] = range(0, len(time_series_as_df))
             result_list.append(time_series_as_df)
     return result_list
 
@@ -259,18 +256,6 @@ def get_data_set(metric, application_name, path_to_data):
     return ds
 
 
-def concat_data(ts):
-    """
-
-    """ 
-    df = ts[0]
-    for i in range(1,len(ts)):
-       df = pd.concat([df,ts[i]],ignore_index=True)
-    
-    return df
-    
-
-
 def get_amount_of_data_per_application(metric, path_to_data):
     """
     @param metric: specified metric to get : "container_cpu", "container_mem", "node_mem"
@@ -315,7 +300,7 @@ def main():
         dataset = get_data_set(
             metric="container_mem",
             application_name="bridge-marker",
-            path_to_data="C:\\Users\\Owner\\AppLearner\\data\\OperatreFirst_PrometheusData_AppLearner\\"
+            path_to_data="../data/"
         )
         print("Plotting.")
         dataset.plot_dataset(number_of_samples=3)
@@ -348,5 +333,5 @@ def main():
 ***********************************************************************************************************************
 """
 
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    main()
