@@ -4,7 +4,7 @@
 ***********************************************************************************************************************
 """
 
-import src.pytorch__driver_for_test_bench as pytorch__driver_for_test_bench
+import pytorch__driver_for_test_bench as pytorch__driver_for_test_bench
 import torch.nn as nn
 import torch.optim as optim
 
@@ -42,17 +42,17 @@ class ExtractTensorAfterLSTM(nn.Module):
 class LSTMPredictor(nn.Module):
     def __init__(self, input_size, output_size):
         super(LSTMPredictor, self).__init__()
-        hidden_size_for_lstm = 200
-        internal_hidden_dimension = 32
-        num_layers = 2
-        dropout = 0.03
+        hidden_size_for_lstm = 20
+        internal_hidden_dimension = 5
+        num_layers = 1
+        # dropout = 0.03
         self.__seq_model = nn.Sequential(
             nn.LSTM(
                 input_size=input_size,
                 hidden_size=hidden_size_for_lstm,
                 num_layers=num_layers,
                 batch_first=True,
-                dropout=dropout,
+                # dropout=dropout,
             ),
             ExtractTensorAfterLSTM(),
             nn.Linear(
@@ -81,8 +81,9 @@ class LSTMPredictor(nn.Module):
 
 
 class PytorchLSTMTester:
-    def __init__(self, length_of_shortest_time_series, metric, app):
+    def __init__(self, length_of_shortest_time_series, metric, app, model_name = "LSTM"):
         # prepare parameters
+        self.model_name = model_name
         self.__msg = "[PytorchLSTMTester]"
         self.__model_input_length = length_of_shortest_time_series // 2
         self.__model = LSTMPredictor(
@@ -107,17 +108,19 @@ class PytorchLSTMTester:
         self.__best_model = pytorch__driver_for_test_bench.train_neural_network(
             training_data_set=training_data_set,
             model=self.__model,
-            num_epochs=30,
+            num_epochs=9,
             model_input_length=self.__model_input_length,
             batch_size=64,
             criterion=self.__criterion,
-            optimizer=self.__optimizer
+            optimizer=self.__optimizer,
+            model_name=self.model_name,
         )
 
     def predict(self, ts_as_df_start, how_much_to_predict):
         self.__best_model.flatten_parameters()
         return pytorch__driver_for_test_bench.predict(
-            ts_as_df_start=ts_as_df_start, how_much_to_predict=how_much_to_predict, best_model=self.__best_model
+            ts_as_df_start=ts_as_df_start, how_much_to_predict=how_much_to_predict, best_model=self.__best_model,
+            model_name = "LSTM"
         )
 
 
@@ -129,11 +132,12 @@ class PytorchLSTMTester:
 
 
 def main(test_to_perform):
-    import src.framework__test_bench as framework__test_bench
+    import framework__test_bench as framework__test_bench
     tb = framework__test_bench.TestBench(
         class_to_test=PytorchLSTMTester,
         path_to_data="../data/",
-        tests_to_perform=test_to_perform
+        tests_to_perform=test_to_perform,
+        model_name="LSTM",
     )
     tb.run_training_and_tests()
 
@@ -147,8 +151,8 @@ def main(test_to_perform):
 if __name__ == "__main__":
     test_to_perform = (
         # Container CPU
-        {"metric": "container_cpu", "app": "kube-rbac-proxy", "prediction length": 16, "sub sample rate": 30,
-         "data length limit": 30},
+        {"metric": "container_cpu", "app": "dns", "prediction length": 10, "sub sample rate": 5,
+         "data length limit": 60},
         {"metric": "container_cpu", "app": "dns", "prediction length": 16, "sub sample rate": 30,
          "data length limit": 30}
         # {"metric": "container_cpu", "app": "collector", "prediction length": 16, "sub sample rate": 30,
