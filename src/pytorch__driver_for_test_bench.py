@@ -10,8 +10,9 @@ import copy
 from torch.autograd import Variable
 import random
 import math
-import src.framework__test_bench as framework__test_bench
+import framework__test_bench as framework__test_bench
 import time
+import torch.optim.lr_scheduler as lr_scheduler
 
 """
 ***********************************************************************************************************************
@@ -124,6 +125,19 @@ def __do_batch(batch_data, optimizer, model, criterion):
     return loss.item()
 
 
+def __do_batch_CNN(batch_data, optimizer, model, criterion):
+    train_input, train_target = batch_data
+    train_input = torch.transpose(train_input, 1, 2)
+    optimizer.zero_grad()
+    out = model.forward(x=train_input)
+    loss = criterion(out, train_target)
+    # loss_array[true_if_pad] = 0
+    # loss = loss_array.sum() / false_if_pad.sum()
+    loss.backward()
+    optimizer.step()
+    return loss.item()
+
+
 def __do_epoch(epoch_num, list_of_batch, training_data_set, optimizer, model, criterion):
     sum_of_losses = 0
     for i, batch_data in enumerate(list_of_batch):
@@ -136,6 +150,20 @@ def __do_epoch(epoch_num, list_of_batch, training_data_set, optimizer, model, cr
     return sum_of_losses
 
 
+def __do_epoch_CNN(epoch_num, list_of_batch, training_data_set, optimizer, model, criterion):
+    sum_of_losses = 0
+    for i, batch_data in enumerate(list_of_batch):
+        loss = __do_batch_CNN(batch_data=batch_data, optimizer=optimizer, model=model, criterion=criterion)
+        # print(__msg, f"loss of batch {i + 1} / {len(list_of_batch)}: {loss}")
+        sum_of_losses += loss
+    # choose random sample and plot
+    # if epoch_num % 5 == 0:
+    #     __plot_prediction_of_random_sample(training_data_set=training_data_set, best_model=model)
+    return sum_of_losses
+
+
+
+
 """
 *******************************************************************************************************************
     API functions
@@ -145,6 +173,40 @@ def __do_epoch(epoch_num, list_of_batch, training_data_set, optimizer, model, cr
 
 def get_device():
     return torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+
+def train_neural_network_CNN(training_data_set, model, num_epochs, model_input_length, batch_size, optimizer, criterion,
+                        min_training_time_in_seconds=5):
+    list_of_batch = __prepare_batches(
+        training_data_set=training_data_set,
+        model_input_length=model_input_length,
+        batch_size=batch_size
+    )
+    lr_decay = [10, 30] # change if needed
+    epoch_time = 0
+    training_start_time = time.time()
+    min_sum_of_losses = float('inf')
+    best_model = copy.deepcopy(model)
+    scheduler = lr_scheduler.ExponentialLR(optimizer, gamma=0.5)
+    for e in range(99999999):
+        if e in lr_decay:
+            scheduler.step()
+        if (e >= num_epochs) and (time.time() - training_start_time > min_training_time_in_seconds):
+            break
+        epoch_start_time = time.time()
+        sum_of_losses = __do_epoch_CNN(
+            epoch_num=e, list_of_batch=list_of_batch, training_data_set=training_data_set, optimizer=optimizer,
+            model=model, criterion=criterion
+        )
+        if sum_of_losses < min_sum_of_losses:
+            min_sum_of_losses = sum_of_losses
+            best_model = copy.deepcopy(model)
+            assert not (best_model is model)  # assert different objects
+        epoch_stop_time = time.time()
+        epoch_time = epoch_stop_time - epoch_start_time
+        avg_loss = sum_of_losses / len(list_of_batch)
+        print(__msg, f"Epoch {e + 1} done. Epoch time was {epoch_time}. Average loss for the batches in epoch is {avg_loss}")
+    return best_model
 
 
 def train_neural_network(training_data_set, model, num_epochs, model_input_length, batch_size, optimizer, criterion,
@@ -183,6 +245,28 @@ def predict(ts_as_df_start, how_much_to_predict, best_model):
         ts_as_tensor = __convert_np_array_to_pytorch_tensor(ts_as_np)[None, :, None].to(get_device())
         for _ in range(how_much_to_predict):
             prediction = best_model.forward(ts_as_tensor)
+            ts_as_tensor = torch.cat([ts_as_tensor, prediction[None, :]], dim=1)
+        prediction_flattened = ts_as_tensor.view(how_much_to_predict + len(ts_as_df_start)).cpu()
+        y = prediction_flattened.detach().numpy()[-how_much_to_predict:]
+        res = np.float64(y)
+        assert isinstance(res, np.ndarray)
+        assert len(res) == how_much_to_predict
+        assert res.shape == (how_much_to_predict,)
+        assert res.dtype == np.float64
+        return res
+
+def predict_CNN(ts_as_df_start, how_much_to_predict, best_model, model_name='CNN'):
+    with torch.no_grad():
+        ts_as_np = ts_as_df_start["sample"].to_numpy()
+        ts_as_tensor = __convert_np_array_to_pytorch_tensor(ts_as_np)[None, :, None].to(get_device())
+        #if CNN
+        for _ in range(how_much_to_predict):
+            # if CNN
+            if model_name == "CNN":
+                ts_as_tensor = torch.transpose(ts_as_tensor, 1, 2)
+            prediction = best_model.forward(ts_as_tensor)
+            if model_name == "CNN":
+                ts_as_tensor = torch.transpose(ts_as_tensor, 1, 2)
             ts_as_tensor = torch.cat([ts_as_tensor, prediction[None, :]], dim=1)
         prediction_flattened = ts_as_tensor.view(how_much_to_predict + len(ts_as_df_start)).cpu()
         y = prediction_flattened.detach().numpy()[-how_much_to_predict:]

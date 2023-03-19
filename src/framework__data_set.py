@@ -36,6 +36,9 @@ class TimeSeriesDataSet:
     *******************************************************************************************************************
     """
 
+    def get_list(self):
+        return self.__list_of_df
+
     def __get_mean_and_std(self):
         """
         calculates mean and std of all samples
@@ -59,6 +62,26 @@ class TimeSeriesDataSet:
     def __len__(self):
         return len(self.__list_of_df)
 
+    def merge_df(self):
+        """
+        concat all the dataframes of the same application
+        """
+        # todo: fix the merging of same apps on different pods and namespaces
+        self.merged_df = pd.concat(self.__list_of_df)
+
+    def sort_by_time(self):
+        """
+        concat all the dataframes of the same application
+        and sort them by time
+        """
+        self.merge_df()
+        self.merged_df = self.merged_df.sort_values(by="time")
+        self.merged_df = self.merged_df.groupby(['time'], as_index=False).max().reset_index()
+
+    def get_marged(self):
+        return self.merged_df
+
+
     def sub_sample_data(self, sub_sample_rate):
         """
         creates sub sampling according to the rate (if for example rate = 5, then every 5 samples, the one with the
@@ -69,6 +92,33 @@ class TimeSeriesDataSet:
 
         for df in self:
             sub_sampled_data = df.groupby(df.index // sub_sample_rate).max()
+            assert len(sub_sampled_data) == ((len(df) + sub_sample_rate - 1) // sub_sample_rate)
+            new_list_of_df.append(sub_sampled_data)
+
+        self.__list_of_df = new_list_of_df
+
+    def add_features(self):  # 2022-04-21 02:50:00   - example
+        """
+        Adding to the DataFrame "hour" and "day of week" columns for using those columns as features later
+        """
+        # todo: figure out if one-hot encoding can be good here
+        new_list_of_df = []
+        for df in self:
+            df['hour'] = df['time'].apply(lambda x: int((str(x).split(' ')[1].split(':')[0])))
+            df['day'] = df['time'].apply(lambda x: pd.Timestamp(str(x).split(' ')[0]).day_of_week) # or dayofweek
+        self.__list_of_df = new_list_of_df
+
+    def mean_sub_sample_data(self, sub_sample_rate):
+        """
+        creates sub sampling according to the rate (if for example rate = 5, then every 5 samples, the one with the
+        mean value is chosen to be in the data set).
+        @param sub_sample_rate:
+        """
+        # todo: fix the bug where the "time" column is disappear
+        new_list_of_df = []
+
+        for df in self:
+            sub_sampled_data = df.groupby(df.index // sub_sample_rate).mean()
             assert len(sub_sampled_data) == ((len(df) + sub_sample_rate - 1) // sub_sample_rate)
             new_list_of_df.append(sub_sampled_data)
 
@@ -88,7 +138,53 @@ class TimeSeriesDataSet:
 
         self.__list_of_df = new_list_of_df
 
-    def plot_dataset(self, number_of_samples):
+
+    def filter_series_with_zeros(self):
+        """
+        filters the data samples with zeros.
+        """
+        new_list_of_df = []
+
+        for df in self:
+            # check if there is sample in the dataframe that contains some zero value
+            if not df.isin([0]).any().any():
+                new_list_of_df.append(df)
+
+        self.__list_of_df = new_list_of_df
+
+
+    def filter_series_extreme_values(self, n):
+        """
+        filter the first and last element from every dataframe
+        """
+        new_list_of_df = []
+
+        for df in self:
+            print(len(df))
+            new_list_of_df.append(df.iloc[n:-n])
+            print(len(df.iloc[n:-n]))
+            assert len(new_list_of_df[-1]) == len(df) - 2*n
+
+
+        self.__list_of_df = new_list_of_df
+
+
+    def plot_dataset(self, number_of_samples, title):
+        """
+        randomly selects samples from the data sets and plots . x-axis is time and y-axis is the value
+        @param number_of_samples: number of randomly selected samples
+        """
+        samples = random.sample(self.__list_of_df, k=number_of_samples)
+        for df in samples:
+            title = df.iloc[0, 2:5].str.cat(sep=', ')
+            # plt.close("all")
+            ts = df["sample"].copy()
+            ts.index = [time for time in df["time"]]
+            ts.plot()
+            plt.title(title)
+            plt.show()
+
+    def plot_dataset_2(self, number_of_samples, title):
         """
         randomly selects samples from the data sets and plots . x-axis is time and y-axis is the value
         @param number_of_samples: number of randomly selected samples
@@ -99,6 +195,8 @@ class TimeSeriesDataSet:
             ts = df["sample"].copy()
             ts.index = [time for time in df["time"]]
             ts.plot()
+            plt.ylabel(title)
+            plt.xlabel('time stamp')
             plt.show()
 
     def scale_data(self):
@@ -181,7 +279,7 @@ def __get_app_name_from_key(key: str):
     namespace = key.split(", ")[1]
     node = key.split(", ")[2]
     pod = key.split(", ")[3]
-    return app_name
+    return [app_name, namespace, node, pod]
 
 
 def __get_data_as_list_of_df_from_file(data_dict, application_name):
@@ -193,10 +291,12 @@ def __get_data_as_list_of_df_from_file(data_dict, application_name):
     @return: time series of a specified application name from a data dictionary
     """
     result_list = []
-    relevant_keys = [k for k in data_dict.keys() if (application_name == __get_app_name_from_key(key=k))]
+    relevant_keys = [k for k in data_dict.keys() if (application_name == __get_app_name_from_key(key=k)[0])]
+    # relevant_keys = [k for k in data_dict.keys() if (application_name == __get_app_name_from_key(key=k)[0] and 'collector-krg9f' == __get_app_name_from_key(key=k)[3]) ]
     for k in relevant_keys:
         list_of_ts = data_dict[k]
         for time_series in list_of_ts:
+            application_name, namespace, node, pod = __get_app_name_from_key(key=k)
             start_time = datetime.strptime(time_series["start"], "%Y-%m-%d %H:%M:%S")
             stop_time = datetime.strptime(time_series["stop"], "%Y-%m-%d %H:%M:%S")
             date_time_range = [start_time + timedelta(minutes=i) for i in range(len(time_series["data"]))]
@@ -204,7 +304,11 @@ def __get_data_as_list_of_df_from_file(data_dict, application_name):
             time_series_as_df = pd.DataFrame(
                 {
                     "sample": time_series["data"],
-                    "time": date_time_range
+                    "time": date_time_range,
+                    "application_name": application_name,
+                    "node": node,
+                    "pod": pod,
+                    "namespace": namespace
                 },
                 # index=date_time_range
             )
@@ -270,7 +374,7 @@ def get_amount_of_data_per_application(metric, path_to_data):
         with open(f'{path_to_data}{file_name}') as json_file:
             data_dict = json.load(json_file)
             for k in data_dict.keys():
-                app_name = __get_app_name_from_key(key=k)
+                app_name = __get_app_name_from_key(key=k)[0]
                 # count number of time series samples
                 amount_of_data = 0
                 for ts in data_dict[k]:
