@@ -169,7 +169,7 @@ class TimeSeriesDataSet:
         self.__list_of_df = new_list_of_df
 
 
-    def plot_dataset(self, number_of_samples, title):
+    def plot_dataset(self, number_of_samples):
         """
         randomly selects samples from the data sets and plots . x-axis is time and y-axis is the value
         @param number_of_samples: number of randomly selected samples
