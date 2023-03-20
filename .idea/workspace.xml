@@ -5,10 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7c4fca50-34d0-47d0-a400-7bde782bfbb2" name="Changes" comment="Adding LSTM model">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Data_extractor.py" beforeDir="false" afterPath="$PROJECT_DIR$/Data_extractor.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Notebooks/3_baseline_LSTM.ipynb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Notebooks/8_LSTM.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/Notebooks/3_LSTM.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Notebooks/5_CNN.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/framework__data_set.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/framework__data_set.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -138,7 +137,7 @@
       <option name="presentableId" value="Default" />
       <updated>1664876178900</updated>
       <workItem from="1679211670349" duration="11399000" />
-      <workItem from="1679241405789" duration="8291000" />
+      <workItem from="1679241405789" duration="8687000" />
     </task>
     <task id="LOCAL-00001" summary="Adding LSTM model">
       <created>1679245750742</created>
@@ -147,7 +146,14 @@
       <option name="project" value="LOCAL" />
       <updated>1679245750742</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Adding LSTM model">
+      <created>1679303085460</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1679303085460</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

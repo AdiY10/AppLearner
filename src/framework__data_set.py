@@ -97,33 +97,6 @@ class TimeSeriesDataSet:
 
         self.__list_of_df = new_list_of_df
 
-    def add_features(self):  # 2022-04-21 02:50:00   - example
-        """
-        Adding to the DataFrame "hour" and "day of week" columns for using those columns as features later
-        """
-        # todo: figure out if one-hot encoding can be good here
-        new_list_of_df = []
-        for df in self:
-            df['hour'] = df['time'].apply(lambda x: int((str(x).split(' ')[1].split(':')[0])))
-            df['day'] = df['time'].apply(lambda x: pd.Timestamp(str(x).split(' ')[0]).day_of_week) # or dayofweek
-        self.__list_of_df = new_list_of_df
-
-    def mean_sub_sample_data(self, sub_sample_rate):
-        """
-        creates sub sampling according to the rate (if for example rate = 5, then every 5 samples, the one with the
-        mean value is chosen to be in the data set).
-        @param sub_sample_rate:
-        """
-        # todo: fix the bug where the "time" column is disappear
-        new_list_of_df = []
-
-        for df in self:
-            sub_sampled_data = df.groupby(df.index // sub_sample_rate).mean()
-            assert len(sub_sampled_data) == ((len(df) + sub_sample_rate - 1) // sub_sample_rate)
-            new_list_of_df.append(sub_sampled_data)
-
-        self.__list_of_df = new_list_of_df
-
     def filter_data_that_is_too_short(self, data_length_limit):
         """
         filters the data samples. all data samples that have a length that is lower than data_length_limit will be
@@ -152,7 +125,6 @@ class TimeSeriesDataSet:
 
         self.__list_of_df = new_list_of_df
 
-
     def filter_series_extreme_values(self, n):
         """
         filter the first and last element from every dataframe
@@ -164,7 +136,6 @@ class TimeSeriesDataSet:
             new_list_of_df.append(df.iloc[n:-n])
             print(len(df.iloc[n:-n]))
             assert len(new_list_of_df[-1]) == len(df) - 2*n
-
 
         self.__list_of_df = new_list_of_df
 
@@ -182,21 +153,6 @@ class TimeSeriesDataSet:
             ts.index = [time for time in df["time"]]
             ts.plot()
             plt.title(title)
-            plt.show()
-
-    def plot_dataset_2(self, number_of_samples, title):
-        """
-        randomly selects samples from the data sets and plots . x-axis is time and y-axis is the value
-        @param number_of_samples: number of randomly selected samples
-        """
-        samples = random.sample(self.__list_of_df, k=number_of_samples)
-        for df in samples:
-            # plt.close("all")
-            ts = df["sample"].copy()
-            ts.index = [time for time in df["time"]]
-            ts.plot()
-            plt.ylabel(title)
-            plt.xlabel('time stamp')
             plt.show()
 
     def scale_data(self):
