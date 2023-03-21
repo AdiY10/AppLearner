@@ -97,6 +97,28 @@ class TimeSeriesDataSet:
 
         self.__list_of_df = new_list_of_df
 
+    def deepAR_sub_sample_data(self, sub_sample_rate, agg = "max"):
+        """
+        creates sub sampling according to the rate (if for example rate = 5, then every 5 samples, the one with the
+        maximal value is chosen to be in the data set).
+        @param sub_sample_rate:
+        """
+        new_list_of_df = []
+
+        for df in self:
+            if agg == "max":
+                sub_sampled_data = df.groupby(df.index // sub_sample_rate).max()
+            if agg == "min":
+                sub_sampled_data = df.groupby(df.index // sub_sample_rate).min()
+            if agg == "avg":
+                sub_sampled_data = df.groupby(df.index // sub_sample_rate).mean()
+            
+            assert len(sub_sampled_data) == ((len(df) + sub_sample_rate - 1) // sub_sample_rate)
+            new_list_of_df.append(sub_sampled_data)
+
+        self.__list_of_df = new_list_of_df
+
+
     def add_features(self):  # 2022-04-21 02:50:00   - example
         """
         Adding to the DataFrame "hour" and "day of week" columns for using those columns as features later
@@ -123,6 +145,7 @@ class TimeSeriesDataSet:
             new_list_of_df.append(sub_sampled_data)
 
         self.__list_of_df = new_list_of_df
+    
 
     def filter_data_that_is_too_short(self, data_length_limit):
         """
@@ -213,6 +236,22 @@ class TimeSeriesDataSet:
             standardized_sample_column = (df["sample"] - self.__mean) / self.__std
             # print("sample", df["sample"] , standardized_sample_column)
             df["sample"] = standardized_sample_column
+    
+    def deepAR_scale_data(self):
+        """
+        rescaling the distribution of values so that the mean of observed values is 0, and the std is 1.
+        each sample is standardized (value - mean / std)
+        """
+        assert not self.__is_data_scaled
+        self.__is_data_scaled = True
+        self.__mean, self.__std = self.__get_mean_and_std()
+        # print(f"self.__mean = {self.__mean}, self.__std = {self.__std}", )
+        # print("max_sample = ", max_sample, " min_sample = ", min_sample)
+        for df in self:
+            standardized_sample_column = (df["sample"] - self.__mean) / self.__std
+            # print("sample", df["sample"] , standardized_sample_column)
+            df["sample"] = standardized_sample_column
+        return self.__mean, self.__std
 
     def split_to_train_and_test(self, length_to_predict):
         """
