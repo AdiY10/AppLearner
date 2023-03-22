@@ -173,7 +173,7 @@ class TestBench:
 
         return mse_here, precision, recall, f1, mase, mape
 
-    def __give_one_test_to_model(self, test_sample, model, should_print):
+    def __give_one_test_to_model(self, test_sample, model, should_print, dataset):
         """
 
         @param test_sample:  test sample
@@ -195,8 +195,8 @@ class TestBench:
         # plot if needed
         if should_print:
             plot_result(
-                original=test_sample,
-                prediction_as_np_array=returned_ts_as_np_array,
+                original= dataset.unscale_data(test_sample),
+                prediction_as_np_array=dataset.unscale_data(returned_ts_as_np_array),
             )
         out_should_be = test_sample["sample"].to_numpy()
         mse_here, precision, recall, f1, mase, mape = self.__get_mse_precision_recall_f1_mase_and_mape(
@@ -265,7 +265,7 @@ class TestBench:
         best_idx_list = [x[1] for x in precisions_list[:15]]
         for i, test_sample in enumerate(test):
             mse_here, precision, recall, f1, mase, mape = self.__give_one_test_to_model(
-                test_sample=test_sample, model=model, should_print=(i in best_idx_list)
+                test_sample=test_sample, model=model, should_print=(i in best_idx_list), test
             )
         ##################################
             

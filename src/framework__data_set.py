@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 from os import listdir
 from os.path import isfile, join
 import numpy as np
+from copy import deepcopy
 
 """
 ***********************************************************************************************************************
@@ -36,9 +37,6 @@ class TimeSeriesDataSet:
     *******************************************************************************************************************
     """
 
-    def get_list(self):
-        return self.__list_of_df
-
     def __get_mean_and_std(self):
         """
         calculates mean and std of all samples
@@ -61,26 +59,6 @@ class TimeSeriesDataSet:
 
     def __len__(self):
         return len(self.__list_of_df)
-
-    def merge_df(self):
-        """
-        concat all the dataframes of the same application
-        """
-        # todo: fix the merging of same apps on different pods and namespaces
-        self.merged_df = pd.concat(self.__list_of_df)
-
-    def sort_by_time(self):
-        """
-        concat all the dataframes of the same application
-        and sort them by time
-        """
-        self.merge_df()
-        self.merged_df = self.merged_df.sort_values(by="time")
-        self.merged_df = self.merged_df.groupby(['time'], as_index=False).max().reset_index()
-
-    def get_marged(self):
-        return self.merged_df
-
 
     def sub_sample_data(self, sub_sample_rate):
         """
@@ -111,35 +89,6 @@ class TimeSeriesDataSet:
 
         self.__list_of_df = new_list_of_df
 
-
-    def filter_series_with_zeros(self):
-        """
-        filters the data samples with zeros.
-        """
-        new_list_of_df = []
-
-        for df in self:
-            # check if there is sample in the dataframe that contains some zero value
-            if not df.isin([0]).any().any():
-                new_list_of_df.append(df)
-
-        self.__list_of_df = new_list_of_df
-
-    def filter_series_extreme_values(self, n):
-        """
-        filter the first and last element from every dataframe
-        """
-        new_list_of_df = []
-
-        for df in self:
-            print(len(df))
-            new_list_of_df.append(df.iloc[n:-n])
-            print(len(df.iloc[n:-n]))
-            assert len(new_list_of_df[-1]) == len(df) - 2*n
-
-        self.__list_of_df = new_list_of_df
-
-
     def plot_dataset(self, number_of_samples):
         """
         randomly selects samples from the data sets and plots . x-axis is time and y-axis is the value
@@ -147,13 +96,18 @@ class TimeSeriesDataSet:
         """
         samples = random.sample(self.__list_of_df, k=number_of_samples)
         for df in samples:
-            title = df.iloc[0, 2:5].str.cat(sep=', ')
             # plt.close("all")
             ts = df["sample"].copy()
             ts.index = [time for time in df["time"]]
             ts.plot()
-            plt.title(title)
             plt.show()
+
+    def unscale_data(self,arr):
+        if isinstance(arr,pd.DataFrame):
+            df = deepcopy(arr)
+            df['sample'] = (df['sample']*self.__std)+self.__mean
+            return df
+        return (arr*self.__std)+self.__mean
 
     def scale_data(self):
         """
@@ -172,6 +126,7 @@ class TimeSeriesDataSet:
 
     def split_to_train_and_test(self, length_to_predict):
         """
+        not the usual train and test split!!!!
         according to an input, length to predict, we split the entire data set to train set and test set.
         The test set will be the same as the dataset in self. The train set will have the same amount of samples,
         but they will be shorter samples with their "tips" cut off.
@@ -221,6 +176,7 @@ def __get_names_of_relevant_files(metric, path_to_data):
     @return: a list of the files that contain the specified from each json file in the directory specified
     """
     list_of_files = __get_names_of_json_files_in_directory(path_to_data)
+    print(list_of_files)
     relevant_files = [file for file in list_of_files if (metric in file)]
     relevant_files.sort()
     return relevant_files
@@ -235,7 +191,7 @@ def __get_app_name_from_key(key: str):
     namespace = key.split(", ")[1]
     node = key.split(", ")[2]
     pod = key.split(", ")[3]
-    return [app_name, namespace, node, pod]
+    return app_name
 
 
 def __get_data_as_list_of_df_from_file(data_dict, application_name):
@@ -247,12 +203,10 @@ def __get_data_as_list_of_df_from_file(data_dict, application_name):
     @return: time series of a specified application name from a data dictionary
     """
     result_list = []
-    relevant_keys = [k for k in data_dict.keys() if (application_name == __get_app_name_from_key(key=k)[0])]
-    # relevant_keys = [k for k in data_dict.keys() if (application_name == __get_app_name_from_key(key=k)[0] and 'collector-krg9f' == __get_app_name_from_key(key=k)[3]) ]
+    relevant_keys = [k for k in data_dict.keys() if (application_name == __get_app_name_from_key(key=k))]
     for k in relevant_keys:
         list_of_ts = data_dict[k]
         for time_series in list_of_ts:
-            application_name, namespace, node, pod = __get_app_name_from_key(key=k)
             start_time = datetime.strptime(time_series["start"], "%Y-%m-%d %H:%M:%S")
             stop_time = datetime.strptime(time_series["stop"], "%Y-%m-%d %H:%M:%S")
             date_time_range = [start_time + timedelta(minutes=i) for i in range(len(time_series["data"]))]
@@ -260,11 +214,7 @@ def __get_data_as_list_of_df_from_file(data_dict, application_name):
             time_series_as_df = pd.DataFrame(
                 {
                     "sample": time_series["data"],
-                    "time": date_time_range,
-                    "application_name": application_name,
-                    "node": node,
-                    "pod": pod,
-                    "namespace": namespace
+                    "time": date_time_range
                 },
                 # index=date_time_range
             )
@@ -330,7 +280,7 @@ def get_amount_of_data_per_application(metric, path_to_data):
         with open(f'{path_to_data}{file_name}') as json_file:
             data_dict = json.load(json_file)
             for k in data_dict.keys():
-                app_name = __get_app_name_from_key(key=k)[0]
+                app_name = __get_app_name_from_key(key=k)
                 # count number of time series samples
                 amount_of_data = 0
                 for ts in data_dict[k]:
