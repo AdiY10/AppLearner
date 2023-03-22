@@ -97,6 +97,7 @@ class TimeSeriesDataSet:
 
         self.__list_of_df = new_list_of_df
 
+
     def deepAR_sub_sample_data(self, sub_sample_rate, agg = "max"):
         """
         creates sub sampling according to the rate (if for example rate = 5, then every 5 samples, the one with the
@@ -146,7 +147,7 @@ class TimeSeriesDataSet:
 
         self.__list_of_df = new_list_of_df
     
-
+    
     def filter_data_that_is_too_short(self, data_length_limit):
         """
         filters the data samples. all data samples that have a length that is lower than data_length_limit will be
@@ -175,7 +176,6 @@ class TimeSeriesDataSet:
 
         self.__list_of_df = new_list_of_df
 
-
     def filter_series_extreme_values(self, n):
         """
         filter the first and last element from every dataframe
@@ -188,11 +188,10 @@ class TimeSeriesDataSet:
             print(len(df.iloc[n:-n]))
             assert len(new_list_of_df[-1]) == len(df) - 2*n
 
-
         self.__list_of_df = new_list_of_df
 
 
-    def plot_dataset(self, number_of_samples, title):
+    def plot_dataset(self, number_of_samples):
         """
         randomly selects samples from the data sets and plots . x-axis is time and y-axis is the value
         @param number_of_samples: number of randomly selected samples
@@ -205,21 +204,6 @@ class TimeSeriesDataSet:
             ts.index = [time for time in df["time"]]
             ts.plot()
             plt.title(title)
-            plt.show()
-
-    def plot_dataset_2(self, number_of_samples, title):
-        """
-        randomly selects samples from the data sets and plots . x-axis is time and y-axis is the value
-        @param number_of_samples: number of randomly selected samples
-        """
-        samples = random.sample(self.__list_of_df, k=number_of_samples)
-        for df in samples:
-            # plt.close("all")
-            ts = df["sample"].copy()
-            ts.index = [time for time in df["time"]]
-            ts.plot()
-            plt.ylabel(title)
-            plt.xlabel('time stamp')
             plt.show()
 
     def scale_data(self):
