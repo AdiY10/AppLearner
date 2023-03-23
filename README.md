@@ -1,7 +1,7 @@
 # AppLearner- WIP
 
-The goal of the project is to build as accurately as possible a prediction model, which will be able to predict the resource consumption of a given container in K8.
-Time-series data on CPU/Memory usage provided by Prometheus, will be used to learn and forecast future resources usage.
+This project targets the problem of accurately estimating resource requirements for workloads running over Red Hat OpenShift Container Platform and adjusting these estimations during the course of application execution. For a majority of real-life applications, it is notoriously difficult to manually estimate the patterns of resource consumption and thus to tune the pod CPU/memory requirements accordingly to avoid under- and overutilization. While there are attempts to solve this problem by on-the-fly monitoring and adaptively scaling pods when changes are detected, these solutions could be inefficient when the application behavior is highly dynamic. Instead, AppLearner is proactively defining the provisioning plan for an application by learning and predicting its resource consumption patterns over time.
+We will use time-series CPU/Memory usage data provided by Prometheus to learn and forecast future resource usage.
 
 ## Background:
 K8 is an open source software that manages, automates, deploys and hosts containerized applications.
