@@ -1,0 +1,13 @@
+name: server_danger
+channels:
+- conda-forge
+dependencies:
+- python
+- jupyter
+- jupyterlab
+- pytorch::pytorch
+- sktime
+- numpy
+- pandas
+- matplotlib
+- pip
