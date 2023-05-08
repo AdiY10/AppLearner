@@ -11,7 +11,6 @@ from sklearn.model_selection import train_test_split
 pd.options.mode.chained_assignment = None
 tf.random.set_seed(0)
 
-
 class LSTM:
     def __init__(self, metric="container_cpu", app="collector", path_to_data="../data/"):
         # prepare parameters
