@@ -39,6 +39,7 @@ class LSTM:
         model.add(LSTM(units=64, return_sequences=False))
         model.add(Dropout(0.2))
         model.add(Dense(units=n_forecast))
+
         # model compilation
         model.compile(loss='mse', optimizer='adam')
 
