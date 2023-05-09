@@ -186,7 +186,7 @@ class TimeSeriesDataSet:
             print(len(df))
             new_list_of_df.append(df.iloc[n:-n])
             print(len(df.iloc[n:-n]))
-            assert len(new_list_of_df[-1]) == len(df) - 2*n
+            assert len(new_list_of_df[-1]) == len(df) - 2 * n
 
         self.__list_of_df = new_list_of_df
 
