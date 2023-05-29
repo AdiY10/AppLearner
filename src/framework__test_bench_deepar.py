@@ -21,10 +21,11 @@ from pytorch_forecasting.data import NaNLabelEncoder
 from pytorch_forecasting.metrics import SMAPE, MultivariateNormalDistributionLoss, NormalDistributionLoss
 from collections import defaultdict
 import pickle
+import random
 
 import sys
 # caution: path[0] is reserved for script path (or '' in REPL)
-sys.path.insert(2, 'C:\\Users\\Owner\\AppLearner\\src')
+sys.path.insert(2, 'C:\\Users\\itay3\\VirtualCodeProjects\\AppLearner-2\\src')
 from framework__data_set import get_data_set
 # from framework__test_bench_deepar import TestBench
 from framework__deepar import DeepARTester
@@ -93,22 +94,19 @@ class TestBenchDeepAR:
         
 
         print(self.__msg, f"Subsampling data from 1 sample per 1 minute to 1 sample per {ss_rate} minutes.")
-        dataset.sub_sample_data(sub_sample_rate=ss_rate, agg=agg)
+        dataset.deepAR_sub_sample_data(sub_sample_rate=ss_rate, agg=agg)
         print(self.__msg, f"Throwing out data that is less than {dl_limit * ss_rate / 60} hours long.")
         dataset.filter_data_that_is_too_short(data_length_limit=dl_limit)
         print(self.__msg, "Scaling data.")
-        mean, std = dataset.scale_data()
-        print(self.__msg, f"Transforming the data to be fix length.") ###################### for now
-        long_d = self.__look_at_me(dataset)
-        print(long_d)
+        mean, std = dataset.deepAR_scale_data()
+        long_ds = self.__look_at_me(dataset)
         dataset = self.__preprocces(dataset, batch, stride)
         print(self.__msg, "Generating DataFrame from data")
         dataset.rename(columns = {'sample':'value'}, inplace = True)
         dataset = dataset.astype(dict(series=str))
-        print(long_d)
         
 
-        return dataset, long_d, mean, std
+        return dataset, long_ds, mean, std
 
     def __get_model(self,training):
         model = self.__class_to_test(training = training
@@ -150,16 +148,29 @@ class TestBenchDeepAR:
         )   
         return train_dataloader ,val_dataloader, test_dataloader ,training ,validation, test
     
-    def __look_at_me(self, df):
+    def __look_at_me(self, df, num_long_to_predict = 4):
+        # choosing randomly timeSerieses to predict over 
+        random.seed("313")
+        pick_random_datasets_to_perform = random.sample(list(range(len(df))),num_long_to_predict)
+        long_ds = []
+        #take into considered the longest df
         long_d = pd.DataFrame(copy.deepcopy(max(df,key=lambda x: x.shape[0])))
-        print(long_d)
+        long_ds = [long_d] + [copy.deepcopy(df[i]) for i in pick_random_datasets_to_perform]
+        
         index = [i for i in range(len(df)) if df[i].shape[0]==long_d.shape[0]]
-        long_d["device"] = str(index[0])
-        long_d["series"] = str(220000)
-        long_d["time_idx"] = range(long_d.shape[0])
-        long_d.rename(columns = {'sample':'value'}, inplace = True)
-        long_d = long_d.astype(dict(series=str))
-        return pd.DataFrame(long_d)
+        pick_random_datasets_to_perform = index + pick_random_datasets_to_perform
+        edited_long_ds = {}
+        #define big series num to distiguish it from the model serieses
+        series_num = 220000
+        for i, df in enumerate(long_ds):
+            df["device"] = str(pick_random_datasets_to_perform[i])
+            df["series"] = str(series_num+i)
+            df["time_idx"] = range(df.shape[0])
+            df.rename(columns = {'sample':'value'}, inplace = True)
+            df = df.astype(dict(series=str))
+            edited_long_ds[i] = pd.DataFrame(df)
+
+        return edited_long_ds
 
     def __preprocces(self, df, window = 128, stride = 20):
         
@@ -215,17 +226,18 @@ class TestBenchDeepAR:
         return mse
 
     @staticmethod
-    def __get_mse_precision_recall_f1_mase_and_mape(actuals1, predictions1, std=1, mean=0):
+    def __get_mse_precision_recall_f1_mase_and_mape(actuals1, predictions1, mean=0, std=1):
         """
         @param actuals: true values
         @param predictions: prediction values
         @return: the mse, precision_recall_f1 and MASE of the results
         """
-        actuals = ((actuals1.clone())*std) + mean
-        predictions = ((predictions1.clone())*std) + mean
+        actuals = ((actuals1.clone()) - mean) / std
+        predictions = ((predictions1.clone()) - mean) /std
+
 
         
-        assert len(actuals) == len(actuals)
+        assert len(actuals) == len(predictions)
         mse_here = TestBenchDeepAR.__calculate_mse(predictions=predictions, actuals=actuals)
 
         # Calculate the actual and predicted positives using element-wise comparison
@@ -248,20 +260,6 @@ class TestBenchDeepAR:
         mape = TestBenchDeepAR.__calculate_mape(predictions=predictions, actuals=actuals)
 
         return mse_here, precision, recall, f1, mase, mape
-    def plot_long_pred(self, actuals,preds):
-        plt.plot(actuals,label = "actuals")
-        plt.plot(preds,label = "preds")
-        plt.legend()
-        plt.show()
-
-    def preduce_long_pred(self, data, model, max_prediction_length):
-        encoder_length = max_prediction_length*4
-        actuals = list(data['value'])[encoder_length:]
-        preds = []
-        for i in range(0, data.shape[0]-encoder_length):
-            #stride = i*max_prediction_length
-            preds += [model.predict(data.iloc[i:i+encoder_length, :]).tolist()[0][0]]
-        self.plot_long_pred(actuals, preds)
         
     def __print_report(self, metric, app, mse, precision, recall, f1,training_time, mase, mape, as_table=False):
         """
@@ -296,7 +294,6 @@ class TestBenchDeepAR:
         max_encoder_length = max_prediction_length*3 #TODO
         print(self.__msg, f"Fetching data for metric='{metric}', app='{app}'.")
         dataset, data_to_pred, mean, std = self.__get_data(dictionary=dictionary)
-        print(data_to_pred)
         train_dataloder, val_dataloader ,test_dataloader, training ,validation, test = self.__to_dataloaders(dataset,max_encoder_length,max_prediction_length, batch=batch) #TODO insert as param
         print(self.__msg, "Making an instance of the class we want to test.")
         model = self.__get_model(training)
@@ -308,17 +305,22 @@ class TestBenchDeepAR:
         print(self.__msg, f"Training took {training_time} seconds.")
         print(self.__msg, "Starting testing loop")
         raw_predictions, x = model.predictions(val_dataloader, test_dataloader)
-        predictions = raw_predictions[0].mean(dim=2)
-        # model.predict_unknown(testset)
-        actuals = model.get_actuals(test_dataloader)
-        mse, precision, recall, f1, mase, mape = self.__get_mse_precision_recall_f1_mase_and_mape(actuals, predictions)
+        raw_predictions = {"prediction":torch.add(torch.mul(raw_predictions[0], std),mean)}
+        x["decoder_target"] = torch.add(torch.mul(x["decoder_target"],torch.tensor(std)),mean)
+        x["encoder_target"] = torch.add(torch.mul(x["encoder_target"],torch.tensor(std)),mean)
+        #take the avg raw prediction to culcuate the Errors metrics
+        predictions = raw_predictions["prediction"].mean(dim=2)
+        actuals = model.get_actuals(test_dataloader, mean, std)
+
+        mse, precision, recall, f1, mase, mape = self.__get_mse_precision_recall_f1_mase_and_mape(actuals, predictions, mean, std)
         if(plot):
             model.plot_predictions(raw_predictions, x, test)
         self.__print_report(
             metric=metric, app=app, mse=mse, precision=precision, recall=recall, f1=f1,
             training_time=training_time, mase=mase, mape=mape
         )
-        self.preduce_long_pred(data_to_pred, model, max_prediction_length)
+        print(self.__msg, "Performance of One-Point Forecasting Method on Full Length Time Series Data")
+        model.preduce_long_pred(data_to_pred, max_prediction_length, std, mean)
         print(self.__msg, f"Done with metric='{metric}', app='{app}'")
         return mse, precision, recall, f1, training_time, mase, mape   
 

@@ -4,10 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7c4fca50-34d0-47d0-a400-7bde782bfbb2" name="Changes" comment="Adding LSTM model">
+    <list default="true" id="7c4fca50-34d0-47d0-a400-7bde782bfbb2" name="Changes" comment="Improving initial analysis notebook">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Data_extractor.py" beforeDir="false" afterPath="$PROJECT_DIR$/Data_extractor.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Notebooks/5_CNN.ipynb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/framework__data_set.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/framework__data_set.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -33,27 +32,28 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "WebServerToolWindowFactoryState": "false",
-    "last_opened_file_path": "/home/ayehoshu/AppLearner/src"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/ayehoshu/AppLearner/src&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/src" />
       <recent name="$PROJECT_DIR$/Adi_LSTM" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/Adi_LSTM/Pictures/LSTM/Collector" />
+      <recent name="$PROJECT_DIR$" />
       <recent name="$PROJECT_DIR$/Notebooks" />
+      <recent name="$PROJECT_DIR$/Adi_LSTM/Pictures/LSTM/Collector" />
       <recent name="$PROJECT_DIR$/Adi_LSTM/Pictures/LSTM/dns" />
       <recent name="$PROJECT_DIR$/Adi_LSTM/Models" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.app_predict">
+  <component name="RunManager" selected="Python.app_training">
     <configuration name="Data_extractor" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="AppLearner" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -122,8 +122,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.app_predict" />
         <item itemvalue="Python.app_training" />
+        <item itemvalue="Python.app_predict" />
         <item itemvalue="Python.Data_extractor" />
       </list>
     </recent_temporary>
@@ -137,7 +137,16 @@
       <option name="presentableId" value="Default" />
       <updated>1664876178900</updated>
       <workItem from="1679211670349" duration="11399000" />
-      <workItem from="1679241405789" duration="8687000" />
+      <workItem from="1679241405789" duration="11693000" />
+      <workItem from="1679557930203" duration="2836000" />
+      <workItem from="1680612078928" duration="11000" />
+      <workItem from="1682926580253" duration="4261000" />
+      <workItem from="1683032716779" duration="100000" />
+      <workItem from="1683540939672" duration="9482000" />
+      <workItem from="1683615041943" duration="3746000" />
+      <workItem from="1683701801789" duration="11000" />
+      <workItem from="1684419146085" duration="625000" />
+      <workItem from="1684420486202" duration="1239000" />
     </task>
     <task id="LOCAL-00001" summary="Adding LSTM model">
       <created>1679245750742</created>
@@ -153,7 +162,56 @@
       <option name="project" value="LOCAL" />
       <updated>1679303085460</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="Removing last version of CNN">
+      <created>1679303528928</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1679303528928</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Adding train and save LSTM model to src">
+      <created>1683549305313</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1683549305313</updated>
+    </task>
+    <task id="LOCAL-00005" summary="Adding train and save LSTM model to src">
+      <created>1683549337837</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1683549337837</updated>
+    </task>
+    <task id="LOCAL-00006" summary="Adding train and save LSTM model to src">
+      <created>1683549519697</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1683549519697</updated>
+    </task>
+    <task id="LOCAL-00007" summary="Clear irrelevant outputs">
+      <created>1683550059580</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1683550059580</updated>
+    </task>
+    <task id="LOCAL-00008" summary="Initial analysis notebook">
+      <created>1683551352981</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1683551352981</updated>
+    </task>
+    <task id="LOCAL-00009" summary="Improving initial analysis notebook">
+      <created>1683615905708</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1683615905708</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -172,7 +230,23 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Adding LSTM model" />
-    <option name="LAST_COMMIT_MESSAGE" value="Adding LSTM model" />
+    <MESSAGE value="Removing last version of CNN" />
+    <MESSAGE value="Adding train and save LSTM model to src" />
+    <MESSAGE value="Clear irrelevant outputs" />
+    <MESSAGE value="Initial analysis notebook" />
+    <MESSAGE value="Improving initial analysis notebook" />
+    <option name="LAST_COMMIT_MESSAGE" value="Improving initial analysis notebook" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/Jesus_LSTM/app_training.py</url>
+          <line>1</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/AppLearner$app_training__1_.coverage" NAME="app_training (1) Coverage Results" MODIFIED="1678701767917" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Jesus_LSTM" />
@@ -181,7 +255,7 @@
     <SUITE FILE_PATH="coverage/AppLearner$Data_extractor.coverage" NAME="Data_extractor Coverage Results" MODIFIED="1678979316249" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/AppLearner$app_testing__1_.coverage" NAME="app_testing (1) Coverage Results" MODIFIED="1678262088550" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Jesus_LSTM" />
     <SUITE FILE_PATH="coverage/AppLearner$app_testing.coverage" NAME="app_testing Coverage Results" MODIFIED="1674552760024" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Jesus" />
-    <SUITE FILE_PATH="coverage/AppLearner$app_training.coverage" NAME="app_training Coverage Results" MODIFIED="1679220477216" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Adi_LSTM" />
+    <SUITE FILE_PATH="coverage/AppLearner$app_training.coverage" NAME="app_training Coverage Results" MODIFIED="1683548695973" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Adi_LSTM" />
     <SUITE FILE_PATH="coverage/AppLearner$app_predict__1_.coverage" NAME="app_predict (1) Coverage Results" MODIFIED="1678796179291" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Adi_LSTM" />
   </component>
 </project>

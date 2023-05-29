@@ -5,10 +5,11 @@ import pandas as pd
 import tensorflow as tf
 from tensorflow.keras.models import Sequential, model_from_json
 from sklearn.preprocessing import MinMaxScaler
+from tensorflow.keras.layers import Dense, LSTM, Dropout
+from sklearn.model_selection import train_test_split
 
 pd.options.mode.chained_assignment = None
 tf.random.set_seed(0)
-
 
 class LSTM:
     def __init__(self, metric="container_cpu", app="collector", path_to_data="../data/"):
@@ -21,6 +22,59 @@ class LSTM:
             application_name=self.app_to_test,
             path_to_data=path_to_data
         )
+    def train_model(self):
+        # Normalize data
+        scaler = MinMaxScaler()
+        for i in range(len(self.dataset)):
+            self.dataset[i]['sample'] = scaler.fit_transform(self.dataset[i][['sample']])
+
+        # generate input and output sequences
+        n_lookback = 12
+        n_forecast = 12
+
+        # build LSTM model
+        model = Sequential()
+        model.add(LSTM(units=64, return_sequences=True, input_shape=(n_lookback, 1)))
+        model.add(Dropout(0.2))
+        model.add(LSTM(units=64, return_sequences=False))
+        model.add(Dropout(0.2))
+        model.add(Dense(units=n_forecast))
+
+        # model compilation
+        model.compile(loss='mse', optimizer='adam')
+
+        # Train model for each sequence in dataset
+        for df in self.dataset:
+            # Create input and output sequences
+            X, y = [], []
+            for i in range(len(df) - n_lookback - n_forecast + 1):
+                X.append(df.iloc[i:i + n_lookback, 0].values.reshape(-1, 1))
+                y.append(df.iloc[i + n_lookback:i + n_lookback + n_forecast, 0].values.reshape(-1, 1))
+            X = np.array(X)
+            y = np.array(y)
+
+            # Split data into training and testing sets
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=False)
+
+            # train the model
+            history = model.fit(X_train, y_train, epochs=50, batch_size=32, validation_data=(X_test, y_test), verbose=2)
+
+        # evaluate the model
+        score = model.evaluate(X_test, y_test, verbose=0)
+        print(f'Test loss: {score}')
+
+    def save_model(self, model):
+        # save trained model
+        model.save('collector_12_12.h5')
+
+        # serialize model to JSON
+        model_json = model.to_json()
+        with open("collector_12_12.json", "w") as json_file:
+            json_file.write(model_json)
+
+        # serialize weights to HDF5
+        model.save_weights("collector_12_12.h5")
+        print("Model saved to disk")
 
     def predict_values(self, sys3, sys4, dataset_test, file):
         # input and output sequences
