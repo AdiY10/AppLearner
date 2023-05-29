@@ -2,7 +2,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch
 import numpy as np
-from src.SCINet.models.SCINet import SCINet
+from src.SCINet import SCINet
 
 import time
 import copy
@@ -40,8 +40,8 @@ def train(training_data_set, model, num_epochs, model_input_length, model_output
                 out_d = out.detach()
                 print_one=False
                 i=0
-                plt.plot(range(model_input_length+model_output_length), list(train_input[i,:,0])+list(train_target[i,:]))
-                plt.plot(range(model_input_length,model_input_length+model_output_length), list(out_d[i,:,0]))
+                plt.plot(range(model_input_length+model_output_length), list(train_input[i,:,0].cpu())+list(train_target[i,:].cpu()))
+                plt.plot(range(model_input_length,model_input_length+model_output_length), list(out_d[i,:,0].cpu()))
                 plt.figure(figsize=(2, 2))
                 plt.show()
             # loss = criterion(out, train_target.unsqueeze(-1)) + MAPELoss(out, train_target.unsqueeze(-1))
@@ -190,7 +190,7 @@ class PytorchSCITester:
             parts = torch.stack(parts[::-1]).unsqueeze(-1)
             y = self.__model(parts).unsqueeze(-1)
             y = torch.flatten(y)
-        return y.numpy()
+        return y.cpu().numpy()
             
 #             while i< x.shape[1]: 
 #                 iter_num+=1
