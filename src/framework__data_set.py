@@ -97,6 +97,57 @@ class TimeSeriesDataSet:
 
         self.__list_of_df = new_list_of_df
 
+
+    def deepAR_sub_sample_data(self, sub_sample_rate, agg = "max"):
+        """
+        creates sub sampling according to the rate (if for example rate = 5, then every 5 samples, the one with the
+        maximal value is chosen to be in the data set).
+        @param sub_sample_rate:
+        """
+        new_list_of_df = []
+
+        for df in self:
+            if agg == "max":
+                sub_sampled_data = df.groupby(df.index // sub_sample_rate).max()
+            if agg == "min":
+                sub_sampled_data = df.groupby(df.index // sub_sample_rate).min()
+            if agg == "avg":
+                sub_sampled_data = df.groupby(df.index // sub_sample_rate).mean()
+            
+            assert len(sub_sampled_data) == ((len(df) + sub_sample_rate - 1) // sub_sample_rate)
+            new_list_of_df.append(sub_sampled_data)
+
+        self.__list_of_df = new_list_of_df
+
+
+    def add_features(self):  # 2022-04-21 02:50:00   - example
+        """
+        Adding to the DataFrame "hour" and "day of week" columns for using those columns as features later
+        """
+        # todo: figure out if one-hot encoding can be good here
+        new_list_of_df = []
+        for df in self:
+            df['hour'] = df['time'].apply(lambda x: int((str(x).split(' ')[1].split(':')[0])))
+            df['day'] = df['time'].apply(lambda x: pd.Timestamp(str(x).split(' ')[0]).day_of_week) # or dayofweek
+        self.__list_of_df = new_list_of_df
+
+    def mean_sub_sample_data(self, sub_sample_rate):
+        """
+        creates sub sampling according to the rate (if for example rate = 5, then every 5 samples, the one with the
+        mean value is chosen to be in the data set).
+        @param sub_sample_rate:
+        """
+        # todo: fix the bug where the "time" column is disappear
+        new_list_of_df = []
+
+        for df in self:
+            sub_sampled_data = df.groupby(df.index // sub_sample_rate).mean()
+            assert len(sub_sampled_data) == ((len(df) + sub_sample_rate - 1) // sub_sample_rate)
+            new_list_of_df.append(sub_sampled_data)
+
+        self.__list_of_df = new_list_of_df
+    
+    
     def filter_data_that_is_too_short(self, data_length_limit):
         """
         filters the data samples. all data samples that have a length that is lower than data_length_limit will be
@@ -135,7 +186,7 @@ class TimeSeriesDataSet:
             print(len(df))
             new_list_of_df.append(df.iloc[n:-n])
             print(len(df.iloc[n:-n]))
-            assert len(new_list_of_df[-1]) == len(df) - 2*n
+            assert len(new_list_of_df[-1]) == len(df) - 2 * n
 
         self.__list_of_df = new_list_of_df
 
@@ -169,6 +220,22 @@ class TimeSeriesDataSet:
             standardized_sample_column = (df["sample"] - self.__mean) / self.__std
             # print("sample", df["sample"] , standardized_sample_column)
             df["sample"] = standardized_sample_column
+    
+    def deepAR_scale_data(self):
+        """
+        rescaling the distribution of values so that the mean of observed values is 0, and the std is 1.
+        each sample is standardized (value - mean / std)
+        """
+        assert not self.__is_data_scaled
+        self.__is_data_scaled = True
+        self.__mean, self.__std = self.__get_mean_and_std()
+        # print(f"self.__mean = {self.__mean}, self.__std = {self.__std}", )
+        # print("max_sample = ", max_sample, " min_sample = ", min_sample)
+        for df in self:
+            standardized_sample_column = (df["sample"] - self.__mean) / self.__std
+            # print("sample", df["sample"] , standardized_sample_column)
+            df["sample"] = standardized_sample_column
+        return self.__mean, self.__std
 
     def split_to_train_and_test(self, length_to_predict):
         """
