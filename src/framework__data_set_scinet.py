@@ -149,6 +149,22 @@ class TimeSeriesDataSet:
         assert min(len(df) for df in train) == (min(len(df) for df in test) - length_to_predict)
         assert max(len(df) for df in train) == (max(len(df) for df in test) - length_to_predict)
         return train, test
+    
+    def split_to_train_and_test_SCINet(self, train_test_ratio):
+        random.shuffle(self.__list_of_df)
+        dfs = self.__list_of_df
+        # copy info to train
+        train = TimeSeriesDataSet(list_of_df=dfs[:int(train_test_ratio*len(dfs))])
+        train.__is_data_scaled = self.__is_data_scaled
+        train.__mean = self.__mean
+        train.__std = self.__std
+        
+        test = TimeSeriesDataSet(list_of_df=dfs[int(train_test_ratio*len(dfs)):])
+        test.__is_data_scaled = self.__is_data_scaled
+        test.__mean = self.__mean
+        test.__std = self.__std
+        return train, test
+    
 
 
 """

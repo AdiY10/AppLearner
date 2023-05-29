@@ -94,11 +94,11 @@ class TestBench:
         print(self.__msg, "Scaling data.")
         dataset.scale_data()
         print(self.__msg, "Splitting data into train and test.")
-        train, test = dataset.split_to_train_and_test(length_to_predict=self.length_to_predict)
-        assert len(train) == len(test)
-        assert min([len(df) for df in train] + [len(df) for df in test]) >= (dl_limit - self.length_to_predict)
+        # train, test = dataset.split_to_train_and_test(length_to_predict=self.length_to_predict)
+        
+        train, test = dataset.split_to_train_and_test_SCINet(0.7)
         print(self.__msg, f"Amount of train/test data is {len(train)}.")
-        return train, dataset
+        return train, test
 
     def __get_model(self, metric, app, train, test):
         length_of_shortest_time_series = min([len(df) for df in train] + [len(df) for df in test])
