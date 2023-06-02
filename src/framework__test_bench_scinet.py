@@ -11,7 +11,7 @@ import time
 from sktime.performance_metrics.forecasting import MeanAbsoluteScaledError
 from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
 from sktime.performance_metrics.forecasting import MeanSquaredError
-from src.framework__data_set_scinet import get_data_set
+from src.framework__scinet import get_data_set
 
 """
 ***********************************************************************************************************************
