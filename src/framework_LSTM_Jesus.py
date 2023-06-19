@@ -1,3 +1,5 @@
+# Author "Jesus Camacho Villanueva <jcamacho@redhat.com>"
+
 # imports
 import matplotlib.pyplot as plt
 import sys, getopt, subprocess
@@ -16,27 +18,29 @@ tf.random.set_seed(0)
 
 class LSTM_Jesus:
 
-
     # dataset
-    def __init__(metric, app, netric, path="../data/")
+    def __init__(self, metric, application_name, interval, path="../data/"):
+
+        self.interval=interval
+
         # read dataset
-        dataset = ds.get_data_set(
+        self.dataset = ds.get_data_set(
             metric=metric,
-            application_name=app,
+            application_name=application_name,
             path_to_data=path
         )
 
 
     # train the model
-    def training(n_lookback, n_forecast, path):
+    def training(self, n_lookback, n_forecast, path):
 
         scaler_train = MinMaxScaler()
         for i in range(0, int(len(dataset))):
             dataset[i]['sample'] = scaler_train.fit_transform(dataset[i][['sample']])
 
         # generate the input and output sequences
-        n_lookback = n_lookback)  # length of input sequences (lookback period)
-        n_forecast = n_forecast)  # length of output sequences (forecast period)
+        n_lookback = n_lookback  # length of input sequences (lookback period)
+        n_forecast = n_forecast  # length of output sequences (forecast period)
 
         # fit the model
         model = Sequential()
@@ -84,14 +88,14 @@ class LSTM_Jesus:
 
     
     # model prediction
-    def predict_values(n_lookback, horizon, dataset_test, path):
+    def predict_values(self, metric, app, n_lookback, horizon, dataset_test):
 
         # input and output sequences
         n_lookback = int(n_lookback)  # length of input sequences (lookback period)
         n_forecast = int(horizon)  # length of output sequences (forecast period)
 
         # trained model file to load
-        file = path+"_"+horizon;
+        file = "../TrainedModels/lookback_"+str(n_lookback)+"/app_"+metric+"/"+app+"/"+metric+"_"+app+"_"+str(n_lookback)+"_"+str(horizon)
 
         # load json and create model
         json_file = open(file+".json", 'r')
@@ -154,17 +158,17 @@ class LSTM_Jesus:
         Y3_ = scaler_test.inverse_transform(Y3_)
         dataset_test['sample'] = scaler_test.inverse_transform(dataset_test[['sample']])
 
-        return Y3_ , rmse, mae, test_len, forecast_len, len_data, number
+        return Y3_ , rmse, mae, test_len, forecast_len, len_data
 
 
     # print a given prediction
-    def predict(metric, app, n_lookback, interval):
+    def predict(self, metric, app, n_lookback, interval):
 
         # get interval
-        number = int(interval) % int(len(dataset_) * 0.33)
+        number = int(self.interval) % int(len(self.dataset) * 0.33)
 
         # forecast interval selected (testing part)
-        dataset_test = dataset_[int(len(dataset_) * 0.67) + number]
+        dataset_test = self.dataset[int(len(self.dataset) * 0.67) + number]
 
         # dataset_test must be greater than lookback
         if(len(dataset_test) <= int(n_lookback)):
@@ -186,7 +190,7 @@ class LSTM_Jesus:
         # iterate over the different forecast (horizon) values
         for i in range(8):
             # predict horizons
-            Y3_ , rmse_, mae_, test_len, forecast_len, len_data, interval = predict_values(n_lookback, horizons[i], dataset_test)
+            Y3_ , rmse_, mae_, test_len, forecast_len, len_data = self.predict_values(metric, app, n_lookback, horizons[i], dataset_test)
             # plot results
             df_future = pd.DataFrame(columns=['Forecast'])
             df_future['Forecast'] = Y3_.flatten()
@@ -197,20 +201,20 @@ class LSTM_Jesus:
             mae.append(mae_)
 
         # title
-        plt.suptitle("Metric: " + metric + ", App: " + app + ", Lookback: " + n_lookback + ", Horizon: 12-1536\n12-12 RMSE: " + str("{:.5f}".format(rmse[0])) + " - MAE: " + str("{:.5f}".format(mae[0])) + " | 12-192 RMSE: " + str("{:.5f}".format(rmse[4])) + " - MAE: " + str("{:.5f}".format(mae[4])) + "\n12-24 RMSE: " + str("{:.5f}".format(rmse[1])) + " - MAE: " + str("{:.5f}".format(mae[1])) + " | 12-384 RMSE: " + str("{:.5f}".format(rmse[5])) + " - MAE: " + str("{:.5f}".format(mae[5])) + "\n12-48 RMSE: " + str("{:.5f}".format(rmse[2])) + " - MAE: " + str("{:.5f}".format(mae[2])) + " | 12-768 RMSE: " + str("{:.5f}".format(rmse[6])) + " - MAE: " + str("{:.5f}".format(mae[6])) + "\n12-96 RMSE: " + str("{:.5f}".format(rmse[3])) + " - MAE: " + str("{:.5f}".format(mae[3])) + " | 12-1536 RMSE: " + str("{:.5f}".format(rmse[7])) + " - MAE: " + str("{:.5f}".format(mae[7])) + "\n Interval: " + str(interval) + ". Samples in this interval: " + str(len_data))
+        plt.suptitle("Metric: " + metric + ", App: " + app + ", Lookback: " + str(n_lookback) + ", Horizon: 12-1536\n12-12 RMSE: " + str("{:.5f}".format(rmse[0])) + " - MAE: " + str("{:.5f}".format(mae[0])) + " | 12-192 RMSE: " + str("{:.5f}".format(rmse[4])) + " - MAE: " + str("{:.5f}".format(mae[4])) + "\n12-24 RMSE: " + str("{:.5f}".format(rmse[1])) + " - MAE: " + str("{:.5f}".format(mae[1])) + " | 12-384 RMSE: " + str("{:.5f}".format(rmse[5])) + " - MAE: " + str("{:.5f}".format(mae[5])) + "\n12-48 RMSE: " + str("{:.5f}".format(rmse[2])) + " - MAE: " + str("{:.5f}".format(mae[2])) + " | 12-768 RMSE: " + str("{:.5f}".format(rmse[6])) + " - MAE: " + str("{:.5f}".format(mae[6])) + "\n12-96 RMSE: " + str("{:.5f}".format(rmse[3])) + " - MAE: " + str("{:.5f}".format(mae[3])) + " | 12-1536 RMSE: " + str("{:.5f}".format(rmse[7])) + " - MAE: " + str("{:.5f}".format(mae[7])) + "\n Interval: " + str(interval) + ". Samples in this interval: " + str(len_data), fontsize=6)
 
-            # plot features
-            plt.legend(ncol=2, loc="upper left")
-            plt.xlabel("Minutes")
-            plt.ylabel("Values")
-            #plt.tight_layout()
-            plt.subplots_adjust(top=0.85)
-            plt.subplots_adjust(bottom=0.1)
-            plt.show()
+        # plot features
+        plt.legend(ncol=2, loc="upper left", fontsize=6)
+        plt.xlabel("Minutes")
+        plt.ylabel("Values")
+        #plt.tight_layout()
+        plt.subplots_adjust(top=0.85)
+        plt.subplots_adjust(bottom=0.1)
+        plt.show()
 
 
     # print prediction errors for a given interval
-    def error(path, interval):
+    def error(self, path, interval):
 
         # get interval
         number = int(interval) % int(len(dataset_) * 0.33)
@@ -232,7 +236,7 @@ class LSTM_Jesus:
         # iterate over the different forecast (horizon) values
         for i in range(8):
             # predict horizons
-            Y3_ , rmse_, mae_, test_len, forecast_len, len_data, interval = predict_values(n_lookback, horizons[i], dataset_test)
+            Y3_ , rmse_, mae_, test_len, forecast_len, len_data = self.predict_values(n_lookback, horizons[i], dataset_test)
             # append results
             rmse.append(rmse_)
             mae.append(mae_)
@@ -253,7 +257,7 @@ class LSTM_Jesus:
 
 
     # obtain a model
-    def get_model(path):
+    def get_model(self, path):
 
         # trained models files to load
         file = path+"_"+trained_model;
@@ -271,7 +275,7 @@ class LSTM_Jesus:
 
 
     # obtain error for all intervals
-    def error_all_intervals(path):
+    def error_all_intervals(self, path):
 
         # create file to write errors
         error_file = path+".error"
@@ -290,14 +294,14 @@ class LSTM_Jesus:
 
         # get models
 
-        model_0 = get_model(horizons[0])
-        model_1 = get_model(horizons[1])
-        model_2 = get_model(horizons[2])
-        model_3 = get_model(horizons[3])
-        model_4 = get_model(horizons[4])
-        model_5 = get_model(horizons[5])
-        model_6 = get_model(horizons[6])
-        model_7 = get_model(horizons[7])
+        model_0 = self.get_model(horizons[0])
+        model_1 = self.get_model(horizons[1])
+        model_2 = self.get_model(horizons[2])
+        model_3 = self.get_model(horizons[3])
+        model_4 = self.get_model(horizons[4])
+        model_5 = self.get_model(horizons[5])
+        model_6 = self.get_model(horizons[6])
+        model_7 = self.get_model(horizons[7])
 
         # obtain RMSE and MAE for all intervals
         for n in range(int(len(dataset_) * 0.33)):
@@ -322,34 +326,34 @@ class LSTM_Jesus:
                 file = open(error_file, 'a')
 
                 if i == 0:
-                    Y3_ , rmse_, mae_, test_len, forecast_len, len_data, interval = predict_values(n_lookback, horizons[i], dataset_test, model_0)
+                    Y3_ , rmse_, mae_, test_len, forecast_len, len_data = self.predict_values(n_lookback, horizons[i], dataset_test, model_0)
                     file.write("12 "+str(number)+" "+str(test_len)+" "+str("{:.5f}".format(rmse))+" "+str("{:.5f}".format(mae))+"\n")
                 elif i == 1:
-                    Y3_ , rmse_, mae_, test_len, forecast_len, len_data, interval= predict_values(n_lookback, horizons[i], dataset_test, model_1)
+                    Y3_ , rmse_, mae_, test_len, forecast_len, len_data = self.predict_values(n_lookback, horizons[i], dataset_test, model_1)
                     file.write("24 "+str(number)+" "+str(test_len)+" "+str("{:.5f}".format(rmse))+" "+str("{:.5f}".format(mae))+"\n")
                 elif i == 2:
-                    Y3_ , rmse_, mae_, test_len, forecast_len, len_data, interval = predict_values(n_lookback, horizons[i], dataset_test, model_2)
+                    Y3_ , rmse_, mae_, test_len, forecast_len, len_data = self.predict_values(n_lookback, horizons[i], dataset_test, model_2)
                     file.write("48 "+str(number)+" "+str(test_len)+" "+str("{:.5f}".format(rmse))+" "+str("{:.5f}".format(mae))+"\n")
                 elif i == 3:
-                    Y3_ , rmse_, mae_, test_len, forecast_len, len_data, interval = predict_values(n_lookback, horizons[i], dataset_test, model_3)
+                    Y3_ , rmse_, mae_, test_len, forecast_len, len_data = self.predict_values(n_lookback, horizons[i], dataset_test, model_3)
                     file.write("96 "+str(number)+" "+str(test_len)+" "+str("{:.5f}".format(rmse))+" "+str("{:.5f}".format(mae))+"\n")
                 elif i == 4:
-                    Y3_ , rmse_, mae_, test_len, forecast_len, len_data, interval = predict_values(n_lookback, horizons[i], dataset_test, model_4)
+                    Y3_ , rmse_, mae_, test_len, forecast_len, len_data = self.predict_values(n_lookback, horizons[i], dataset_test, model_4)
                     file.write("192 "+str(number)+" "+str(test_len)+" "+str("{:.5f}".format(rmse))+" "+str("{:.5f}".format(mae))+"\n")
                 elif i == 5:
-                    Y3_ , rmse_, mae_, test_len, forecast_len, len_data, interval = predict_values(n_lookback, horizons[i], dataset_test, model_5)
+                    Y3_ , rmse_, mae_, test_len, forecast_len, len_data = self.predict_values(n_lookback, horizons[i], dataset_test, model_5)
                     file.write("384 "+str(number)+" "+str(test_len)+" "+str("{:.5f}".format(rmse))+" "+str("{:.5f}".format(mae))+"\n")
                 elif i == 6:
-                    Y3_ , rmse_, mae_, test_len, forecast_len, len_data, interval = predict_values(n_lookback, horizons[i], dataset_test, model_6)
+                    Y3_ , rmse_, mae_, test_len, forecast_len, len_data = self.predict_values(n_lookback, horizons[i], dataset_test, model_6)
                     file.write("768 "+str(number)+" "+str(test_len)+" "+str("{:.5f}".format(rmse))+" "+str("{:.5f}".format(mae))+"\n")
                 else:
-                    Y3_ , rmse_, mae_, test_len, forecast_len, len_data, interval = predict_values(n_lookback, horizons[i], dataset_test, model_7)
+                    Y3_ , rmse_, mae_, test_len, forecast_len, len_data = self.predict_values(n_lookback, horizons[i], dataset_test, model_7)
                     file.write("1536 "+str(number)+" "+str(test_len)+" "+str("{:.5f}".format(rmse)+" "+str("{:.5f}".format(mae)))+"\n")
                 file.close()
 
 
     # obtain quintiles
-    def get_quantiles(path):
+    def get_quantiles(self, path):
 
         # initialize some variables and arrays
         lookback = None
@@ -396,10 +400,10 @@ class LSTM_Jesus:
         return lookback, Matrix_rmse, Matrix_mae
 
     # print quantiles
-    def quantiles(path):
+    def quantiles(self, path):
 
         # fined lookback, and errors from the given file
-        lookback, Matrix_rmse, Matrix_mae = get_quantiles(path)
+        lookback, Matrix_rmse, Matrix_mae = self.get_quantiles(path)
 
         # obatin the name of the App
         if(lookback == '12'):
@@ -422,7 +426,7 @@ class LSTM_Jesus:
         plt.plot(x, matrix_rmse[6], label="Forecast 768")
         plt.plot(x, matrix_rmse[7], label="Forecast 1536")
 
-        plt.suptitle("App: " + file_name + "\nRMSE (lookback=" + lookback + ")")
+        plt.suptitle("App: " + file_name + "\nRMSE (lookback=" + lookback + ")", fontsize=10)
         plt.legend(loc='best')
         plt.xlabel("Error percentage")
         plt.ylabel("Samples by error percentage")
@@ -440,7 +444,7 @@ class LSTM_Jesus:
         plt.plot(x, matrix_mae[6], label="Forecast 768")
         plt.plot(x, matrix_mae[7], label="Forecast 1536")
 
-        plt.suptitle("App: " + file_name + "\nMAE (lookback=" + lookback + ")")
+        plt.suptitle("App: " + file_name + "\nMAE (lookback=" + lookback + ")", fontsize=10)
         plt.legend(loc='best')
         plt.xlabel("Error percentage")
         plt.ylabel("Samples by error percentage")
@@ -448,14 +452,14 @@ class LSTM_Jesus:
 
 
     # function to get range count
-    def get_range_count(file, forecast, lower, upper):
+    def get_range_count(self, file, forecast, lower, upper):
         cmd = f"cat {file} | grep '^{forecast}' | awk '{{ if ($4 >= {lower} && $4 < {upper}) print $4 }}' | wc -l"
         result = subprocess.check_output(cmd, shell=True).decode().strip()
         return int(result)
 
 
     # print quintiles
-    def obtain_quantiles(path):
+    def obtain_quantiles(self, path):
 
         # get file information
         arg = path
@@ -468,53 +472,53 @@ class LSTM_Jesus:
         lookback = file[-2:]
 
         # get quintiles
-        range_12_1 = get_range_count(arg, "12", 0, 0.05)
-        range_12_2 = get_range_count(arg, "12", 0.05, 0.10)
-        range_12_3 = get_range_count(arg, "12", 0.10, 0.15)
-        range_12_4 = get_range_count(arg, "12", 0.15, 0.20)
-        range_12_5 = get_range_count(arg, "12", 0.20, 1.00)
+        range_12_1 = self.get_range_count(arg, "12", 0, 0.05)
+        range_12_2 = self.get_range_count(arg, "12", 0.05, 0.10)
+        range_12_3 = self.get_range_count(arg, "12", 0.10, 0.15)
+        range_12_4 = self.get_range_count(arg, "12", 0.15, 0.20)
+        range_12_5 = self.get_range_count(arg, "12", 0.20, 1.00)
 
-        range_24_1 = get_range_count(arg, "24", 0, 0.05)
-        range_24_2 = get_range_count(arg, "24", 0.05, 0.10)
-        range_24_3 = get_range_count(arg, "24", 0.10, 0.15)
-        range_24_4 = get_range_count(arg, "24", 0.15, 0.20)
-        range_24_5 = get_range_count(arg, "24", 0.20, 1.00)
+        range_24_1 = self.get_range_count(arg, "24", 0, 0.05)
+        range_24_2 = self.get_range_count(arg, "24", 0.05, 0.10)
+        range_24_3 = self.get_range_count(arg, "24", 0.10, 0.15)
+        range_24_4 = self.get_range_count(arg, "24", 0.15, 0.20)
+        range_24_5 = self.get_range_count(arg, "24", 0.20, 1.00)
 
-        range_48_1 = get_range_count(arg, "48", 0, 0.05)
-        range_48_2 = get_range_count(arg, "48", 0.05, 0.10)
-        range_48_3 = get_range_count(arg, "48", 0.10, 0.15)
-        range_48_4 = get_range_count(arg, "48", 0.15, 0.20)
-        range_48_5 = get_range_count(arg, "48", 0.20, 1.00)
+        range_48_1 = self.get_range_count(arg, "48", 0, 0.05)
+        range_48_2 = self.get_range_count(arg, "48", 0.05, 0.10)
+        range_48_3 = self.get_range_count(arg, "48", 0.10, 0.15)
+        range_48_4 = self.get_range_count(arg, "48", 0.15, 0.20)
+        range_48_5 = self.get_range_count(arg, "48", 0.20, 1.00)
 
-        range_96_1 = get_range_count(arg, "96", 0, 0.05)
-        range_96_2 = get_range_count(arg, "96", 0.05, 0.10)
-        range_96_3 = get_range_count(arg, "96", 0.10, 0.15)
-        range_96_4 = get_range_count(arg, "96", 0.15, 0.20)
-        range_96_5 = get_range_count(arg, "96", 0.20, 1.00)
+        range_96_1 = self.get_range_count(arg, "96", 0, 0.05)
+        range_96_2 = self.get_range_count(arg, "96", 0.05, 0.10)
+        range_96_3 = self.get_range_count(arg, "96", 0.10, 0.15)
+        range_96_4 = self.get_range_count(arg, "96", 0.15, 0.20)
+        range_96_5 = self.get_range_count(arg, "96", 0.20, 1.00)
 
-        range_192_1 = get_range_count(arg, "192", 0, 0.05)
-        range_192_2 = get_range_count(arg, "192", 0.05, 0.10)
-        range_192_3 = get_range_count(arg, "192", 0.10, 0.15)
-        range_192_4 = get_range_count(arg, "192", 0.15, 0.20)
-        range_192_5 = get_range_count(arg, "192", 0.20, 1.00)
+        range_192_1 = self.get_range_count(arg, "192", 0, 0.05)
+        range_192_2 = self.get_range_count(arg, "192", 0.05, 0.10)
+        range_192_3 = self.get_range_count(arg, "192", 0.10, 0.15)
+        range_192_4 = self.get_range_count(arg, "192", 0.15, 0.20)
+        range_192_5 = self.get_range_count(arg, "192", 0.20, 1.00)
 
-        range_384_1 = get_range_count(arg, "384", 0, 0.05)
-        range_384_2 = get_range_count(arg, "384", 0.05, 0.10)
-        range_384_3 = get_range_count(arg, "384", 0.10, 0.15)
-        range_384_4 = get_range_count(arg, "384", 0.15, 0.20)
-        range_384_5 = get_range_count(arg, "384", 0.20, 1.00)
+        range_384_1 = self.get_range_count(arg, "384", 0, 0.05)
+        range_384_2 = self.get_range_count(arg, "384", 0.05, 0.10)
+        range_384_3 = self.get_range_count(arg, "384", 0.10, 0.15)
+        range_384_4 = self.get_range_count(arg, "384", 0.15, 0.20)
+        range_384_5 = self.get_range_count(arg, "384", 0.20, 1.00)
 
-        range_768_1 = get_range_count(arg, "768", 0, 0.05)
-        range_768_2 = get_range_count(arg, "768", 0.05, 0.10)
-        range_768_3 = get_range_count(arg, "768", 0.10, 0.15)
-        range_768_4 = get_range_count(arg, "768", 0.15, 0.20)
-        range_768_5 = get_range_count(arg, "768", 0.20, 1.00)
+        range_768_1 = self.get_range_count(arg, "768", 0, 0.05)
+        range_768_2 = self.get_range_count(arg, "768", 0.05, 0.10)
+        range_768_3 = self.get_range_count(arg, "768", 0.10, 0.15)
+        range_768_4 = self.get_range_count(arg, "768", 0.15, 0.20)
+        range_768_5 = self.get_range_count(arg, "768", 0.20, 1.00)
 
-        range_1536_1 = get_range_count(arg, "1536", 0, 0.05)
-        range_1536_2 = get_range_count(arg, "1536", 0.05, 0.10)
-        range_1536_3 = get_range_count(arg, "1536", 0.10, 0.15)
-        range_1536_4 = get_range_count(arg, "1536", 0.15, 0.20)
-        range_1536_5 = get_range_count(arg, "1536", 0.20, 1.00)
+        range_1536_1 = self.get_range_count(arg, "1536", 0, 0.05)
+        range_1536_2 = self.get_range_count(arg, "1536", 0.05, 0.10)
+        range_1536_3 = self.get_range_count(arg, "1536", 0.10, 0.15)
+        range_1536_4 = self.get_range_count(arg, "1536", 0.15, 0.20)
+        range_1536_5 = self.get_range_count(arg, "1536", 0.20, 1.00)
 
         # print quintiles
         with open(output_file, "w") as file:
@@ -570,21 +574,21 @@ class LSTM_Jesus:
 
 
     # function to get range count rmse
-    def get_range_count_rmse(file, forecast, lower, upper):
+    def get_range_count_rmse(self, file, forecast, lower, upper):
         cmd = f"cat {file} | grep '^{forecast}' | awk '{{ if ($4 >= {lower} && $4 < {upper}) print $4 }}' | wc -l"
         result = subprocess.check_output(cmd, shell=True).decode().strip()
         return int(result)
 
 
     # function to get range count from mae
-    def get_range_count_mae(file, forecast, lower, upper):
+    def get_range_count_mae(self, file, forecast, lower, upper):
         cmd = f"cat {file} | grep '^{forecast}' | awk '{{ if ($5 >= {lower} && $5 < {upper}) print $5 }}' | wc -l"
         result = subprocess.check_output(cmd, shell=True).decode().strip()
         return int(result)
 
 
     # obtain deciles for RMSE and MAE
-    def obtain_quantiles_rmse_mae(path):
+    def obtain_quantiles_rmse_mae(self, path):
 
         # get file information
         arg = path
@@ -597,199 +601,199 @@ class LSTM_Jesus:
         lookback = file[-2:]
 
         # get deciles from rmse
-        range_12_rmse_1  = get_range_count_rmse(arg, "12", 0, 0.05)
-        range_12_rmse_2  = get_range_count_rmse(arg, "12", 0.05, 0.10)
-        range_12_rmse_3  = get_range_count_rmse(arg, "12", 0.10, 0.15)
-        range_12_rmse_4  = get_range_count_rmse(arg, "12", 0.15, 0.20)
-        range_12_rmse_5  = get_range_count_rmse(arg, "12", 0.20, 0.25)
-        range_12_rmse_6  = get_range_count_rmse(arg, "12", 0.25, 0.30)
-        range_12_rmse_7  = get_range_count_rmse(arg, "12", 0.30, 0.35)
-        range_12_rmse_8  = get_range_count_rmse(arg, "12", 0.35, 0.40)
-        range_12_rmse_9  = get_range_count_rmse(arg, "12", 0.40, 0.45)
-        range_12_rmse_10 = get_range_count_rmse(arg, "12", 0.45, 0.50)
-        range_12_rmse_11 = get_range_count_rmse(arg, "12", 0.50, 1.00)
+        range_12_rmse_1  = self.get_range_count_rmse(arg, "12", 0, 0.05)
+        range_12_rmse_2  = self.get_range_count_rmse(arg, "12", 0.05, 0.10)
+        range_12_rmse_3  = self.get_range_count_rmse(arg, "12", 0.10, 0.15)
+        range_12_rmse_4  = self.get_range_count_rmse(arg, "12", 0.15, 0.20)
+        range_12_rmse_5  = self.get_range_count_rmse(arg, "12", 0.20, 0.25)
+        range_12_rmse_6  = self.get_range_count_rmse(arg, "12", 0.25, 0.30)
+        range_12_rmse_7  = self.get_range_count_rmse(arg, "12", 0.30, 0.35)
+        range_12_rmse_8  = self.get_range_count_rmse(arg, "12", 0.35, 0.40)
+        range_12_rmse_9  = self.get_range_count_rmse(arg, "12", 0.40, 0.45)
+        range_12_rmse_10 = self.get_range_count_rmse(arg, "12", 0.45, 0.50)
+        range_12_rmse_11 = self.get_range_count_rmse(arg, "12", 0.50, 1.00)
 
-        range_24_rmse_1  = get_range_count_rmse(arg, "24", 0, 0.05)
-        range_24_rmse_2  = get_range_count_rmse(arg, "24", 0.05, 0.10)
-        range_24_rmse_3  = get_range_count_rmse(arg, "24", 0.10, 0.15)
-        range_24_rmse_4  = get_range_count_rmse(arg, "24", 0.15, 0.20)
-        range_24_rmse_5  = get_range_count_rmse(arg, "24", 0.20, 0.25)
-        range_24_rmse_6  = get_range_count_rmse(arg, "24", 0.25, 0.30)
-        range_24_rmse_7  = get_range_count_rmse(arg, "24", 0.30, 0.35)
-        range_24_rmse_8  = get_range_count_rmse(arg, "24", 0.35, 0.40)
-        range_24_rmse_9  = get_range_count_rmse(arg, "24", 0.40, 0.45)
-        range_24_rmse_10 = get_range_count_rmse(arg, "24", 0.45, 0.50)
-        range_24_rmse_11 = get_range_count_rmse(arg, "24", 0.50, 1.00)
+        range_24_rmse_1  = self.get_range_count_rmse(arg, "24", 0, 0.05)
+        range_24_rmse_2  = self.get_range_count_rmse(arg, "24", 0.05, 0.10)
+        range_24_rmse_3  = self.get_range_count_rmse(arg, "24", 0.10, 0.15)
+        range_24_rmse_4  = self.get_range_count_rmse(arg, "24", 0.15, 0.20)
+        range_24_rmse_5  = self.get_range_count_rmse(arg, "24", 0.20, 0.25)
+        range_24_rmse_6  = self.get_range_count_rmse(arg, "24", 0.25, 0.30)
+        range_24_rmse_7  = self.get_range_count_rmse(arg, "24", 0.30, 0.35)
+        range_24_rmse_8  = self.get_range_count_rmse(arg, "24", 0.35, 0.40)
+        range_24_rmse_9  = self.get_range_count_rmse(arg, "24", 0.40, 0.45)
+        range_24_rmse_10 = self.get_range_count_rmse(arg, "24", 0.45, 0.50)
+        range_24_rmse_11 = self.get_range_count_rmse(arg, "24", 0.50, 1.00)
 
-        range_48_rmse_1  = get_range_count_rmse(arg, "48", 0, 0.05)
-        range_48_rmse_2  = get_range_count_rmse(arg, "48", 0.05, 0.10)
-        range_48_rmse_3  = get_range_count_rmse(arg, "48", 0.10, 0.15)
-        range_48_rmse_4  = get_range_count_rmse(arg, "48", 0.15, 0.20)
-        range_48_rmse_5  = get_range_count_rmse(arg, "48", 0.20, 0.25)
-        range_48_rmse_6  = get_range_count_rmse(arg, "48", 0.25, 0.30)
-        range_48_rmse_7  = get_range_count_rmse(arg, "48", 0.30, 0.35)
-        range_48_rmse_8  = get_range_count_rmse(arg, "48", 0.35, 0.40)
-        range_48_rmse_9  = get_range_count_rmse(arg, "48", 0.40, 0.45)
-        range_48_rmse_10 = get_range_count_rmse(arg, "48", 0.45, 0.50)
-        range_48_rmse_11 = get_range_count_rmse(arg, "48", 0.50, 1.00)
+        range_48_rmse_1  = self.get_range_count_rmse(arg, "48", 0, 0.05)
+        range_48_rmse_2  = self.get_range_count_rmse(arg, "48", 0.05, 0.10)
+        range_48_rmse_3  = self.get_range_count_rmse(arg, "48", 0.10, 0.15)
+        range_48_rmse_4  = self.get_range_count_rmse(arg, "48", 0.15, 0.20)
+        range_48_rmse_5  = self.get_range_count_rmse(arg, "48", 0.20, 0.25)
+        range_48_rmse_6  = self.get_range_count_rmse(arg, "48", 0.25, 0.30)
+        range_48_rmse_7  = self.get_range_count_rmse(arg, "48", 0.30, 0.35)
+        range_48_rmse_8  = self.get_range_count_rmse(arg, "48", 0.35, 0.40)
+        range_48_rmse_9  = self.get_range_count_rmse(arg, "48", 0.40, 0.45)
+        range_48_rmse_10 = self.get_range_count_rmse(arg, "48", 0.45, 0.50)
+        range_48_rmse_11 = self.get_range_count_rmse(arg, "48", 0.50, 1.00)
 
-        range_96_rmse_1  = get_range_count_rmse(arg, "96", 0, 0.05)
-        range_96_rmse_2  = get_range_count_rmse(arg, "96", 0.05, 0.10)
-        range_96_rmse_3  = get_range_count_rmse(arg, "96", 0.10, 0.15)
-        range_96_rmse_4  = get_range_count_rmse(arg, "96", 0.15, 0.20)
-        range_96_rmse_5  = get_range_count_rmse(arg, "96", 0.20, 0.25)
-        range_96_rmse_6  = get_range_count_rmse(arg, "96", 0.25, 0.30)
-        range_96_rmse_7  = get_range_count_rmse(arg, "96", 0.30, 0.35)
-        range_96_rmse_8  = get_range_count_rmse(arg, "96", 0.35, 0.40)
-        range_96_rmse_9  = get_range_count_rmse(arg, "96", 0.40, 0.45)
-        range_96_rmse_10 = get_range_count_rmse(arg, "96", 0.45, 0.50)
-        range_96_rmse_11 = get_range_count_rmse(arg, "96", 0.50, 1.00)
+        range_96_rmse_1  = self.get_range_count_rmse(arg, "96", 0, 0.05)
+        range_96_rmse_2  = self.get_range_count_rmse(arg, "96", 0.05, 0.10)
+        range_96_rmse_3  = self.get_range_count_rmse(arg, "96", 0.10, 0.15)
+        range_96_rmse_4  = self.get_range_count_rmse(arg, "96", 0.15, 0.20)
+        range_96_rmse_5  = self.get_range_count_rmse(arg, "96", 0.20, 0.25)
+        range_96_rmse_6  = self.get_range_count_rmse(arg, "96", 0.25, 0.30)
+        range_96_rmse_7  = self.get_range_count_rmse(arg, "96", 0.30, 0.35)
+        range_96_rmse_8  = self.get_range_count_rmse(arg, "96", 0.35, 0.40)
+        range_96_rmse_9  = self.get_range_count_rmse(arg, "96", 0.40, 0.45)
+        range_96_rmse_10 = self.get_range_count_rmse(arg, "96", 0.45, 0.50)
+        range_96_rmse_11 = self.get_range_count_rmse(arg, "96", 0.50, 1.00)
 
-        range_192_rmse_1  = get_range_count_rmse(arg, "192", 0, 0.05)
-        range_192_rmse_2  = get_range_count_rmse(arg, "192", 0.05, 0.10)
-        range_192_rmse_3  = get_range_count_rmse(arg, "192", 0.10, 0.15)
-        range_192_rmse_4  = get_range_count_rmse(arg, "192", 0.15, 0.20)
-        range_192_rmse_5  = get_range_count_rmse(arg, "192", 0.20, 0.25)
-        range_192_rmse_6  = get_range_count_rmse(arg, "192", 0.25, 0.30)
-        range_192_rmse_7  = get_range_count_rmse(arg, "192", 0.30, 0.35)
-        range_192_rmse_8  = get_range_count_rmse(arg, "192", 0.35, 0.40)
-        range_192_rmse_9  = get_range_count_rmse(arg, "192", 0.40, 0.45)
-        range_192_rmse_10 = get_range_count_rmse(arg, "192", 0.45, 0.50)
-        range_192_rmse_11 = get_range_count_rmse(arg, "192", 0.50, 1.00)
+        range_192_rmse_1  = self.get_range_count_rmse(arg, "192", 0, 0.05)
+        range_192_rmse_2  = self.get_range_count_rmse(arg, "192", 0.05, 0.10)
+        range_192_rmse_3  = self.get_range_count_rmse(arg, "192", 0.10, 0.15)
+        range_192_rmse_4  = self.get_range_count_rmse(arg, "192", 0.15, 0.20)
+        range_192_rmse_5  = self.get_range_count_rmse(arg, "192", 0.20, 0.25)
+        range_192_rmse_6  = self.get_range_count_rmse(arg, "192", 0.25, 0.30)
+        range_192_rmse_7  = self.get_range_count_rmse(arg, "192", 0.30, 0.35)
+        range_192_rmse_8  = self.get_range_count_rmse(arg, "192", 0.35, 0.40)
+        range_192_rmse_9  = self.get_range_count_rmse(arg, "192", 0.40, 0.45)
+        range_192_rmse_10 = self.get_range_count_rmse(arg, "192", 0.45, 0.50)
+        range_192_rmse_11 = self.get_range_count_rmse(arg, "192", 0.50, 1.00)
 
-        range_384_rmse_1  = get_range_count_rmse(arg, "384", 0, 0.05)
-        range_384_rmse_2  = get_range_count_rmse(arg, "384", 0.05, 0.10)
-        range_384_rmse_3  = get_range_count_rmse(arg, "384", 0.10, 0.15)
-        range_384_rmse_4  = get_range_count_rmse(arg, "384", 0.15, 0.20)
-        range_384_rmse_5  = get_range_count_rmse(arg, "384", 0.20, 0.25)
-        range_384_rmse_6  = get_range_count_rmse(arg, "384", 0.25, 0.30)
-        range_384_rmse_7  = get_range_count_rmse(arg, "384", 0.30, 0.35)
-        range_384_rmse_8  = get_range_count_rmse(arg, "384", 0.35, 0.40)
-        range_384_rmse_9  = get_range_count_rmse(arg, "384", 0.40, 0.45)
-        range_384_rmse_10 = get_range_count_rmse(arg, "384", 0.45, 0.50)
-        range_384_rmse_11 = get_range_count_rmse(arg, "384", 0.50, 1.00)
+        range_384_rmse_1  = self.get_range_count_rmse(arg, "384", 0, 0.05)
+        range_384_rmse_2  = self.get_range_count_rmse(arg, "384", 0.05, 0.10)
+        range_384_rmse_3  = self.get_range_count_rmse(arg, "384", 0.10, 0.15)
+        range_384_rmse_4  = self.get_range_count_rmse(arg, "384", 0.15, 0.20)
+        range_384_rmse_5  = self.get_range_count_rmse(arg, "384", 0.20, 0.25)
+        range_384_rmse_6  = self.get_range_count_rmse(arg, "384", 0.25, 0.30)
+        range_384_rmse_7  = self.get_range_count_rmse(arg, "384", 0.30, 0.35)
+        range_384_rmse_8  = self.get_range_count_rmse(arg, "384", 0.35, 0.40)
+        range_384_rmse_9  = self.get_range_count_rmse(arg, "384", 0.40, 0.45)
+        range_384_rmse_10 = self.get_range_count_rmse(arg, "384", 0.45, 0.50)
+        range_384_rmse_11 = self.get_range_count_rmse(arg, "384", 0.50, 1.00)
 
-        range_768_rmse_1  = get_range_count_rmse(arg, "768", 0, 0.05)
-        range_768_rmse_2  = get_range_count_rmse(arg, "768", 0.05, 0.10)
-        range_768_rmse_3  = get_range_count_rmse(arg, "768", 0.10, 0.15)
-        range_768_rmse_4  = get_range_count_rmse(arg, "768", 0.15, 0.20)
-        range_768_rmse_5  = get_range_count_rmse(arg, "768", 0.20, 0.25)
-        range_768_rmse_6  = get_range_count_rmse(arg, "768", 0.25, 0.30)
-        range_768_rmse_7  = get_range_count_rmse(arg, "768", 0.30, 0.35)
-        range_768_rmse_8  = get_range_count_rmse(arg, "768", 0.35, 0.40)
-        range_768_rmse_9  = get_range_count_rmse(arg, "768", 0.40, 0.45)
-        range_768_rmse_10 = get_range_count_rmse(arg, "768", 0.45, 0.50)
-        range_768_rmse_11 = get_range_count_rmse(arg, "768", 0.50, 1.00)
+        range_768_rmse_1  = self.get_range_count_rmse(arg, "768", 0, 0.05)
+        range_768_rmse_2  = self.get_range_count_rmse(arg, "768", 0.05, 0.10)
+        range_768_rmse_3  = self.get_range_count_rmse(arg, "768", 0.10, 0.15)
+        range_768_rmse_4  = self.get_range_count_rmse(arg, "768", 0.15, 0.20)
+        range_768_rmse_5  = self.get_range_count_rmse(arg, "768", 0.20, 0.25)
+        range_768_rmse_6  = self.get_range_count_rmse(arg, "768", 0.25, 0.30)
+        range_768_rmse_7  = self.get_range_count_rmse(arg, "768", 0.30, 0.35)
+        range_768_rmse_8  = self.get_range_count_rmse(arg, "768", 0.35, 0.40)
+        range_768_rmse_9  = self.get_range_count_rmse(arg, "768", 0.40, 0.45)
+        range_768_rmse_10 = self.get_range_count_rmse(arg, "768", 0.45, 0.50)
+        range_768_rmse_11 = self.get_range_count_rmse(arg, "768", 0.50, 1.00)
 
-        range_1536_rmse_1  = get_range_count_rmse(arg, "1536", 0, 0.05)
-        range_1536_rmse_2  = get_range_count_rmse(arg, "1536", 0.05, 0.10)
-        range_1536_rmse_3  = get_range_count_rmse(arg, "1536", 0.10, 0.15)
-        range_1536_rmse_4  = get_range_count_rmse(arg, "1536", 0.15, 0.20)
-        range_1536_rmse_5  = get_range_count_rmse(arg, "1536", 0.20, 0.25)
-        range_1536_rmse_6  = get_range_count_rmse(arg, "1536", 0.25, 0.30)
-        range_1536_rmse_7  = get_range_count_rmse(arg, "1536", 0.30, 0.35)
-        range_1536_rmse_8  = get_range_count_rmse(arg, "1536", 0.35, 0.40)
-        range_1536_rmse_9  = get_range_count_rmse(arg, "1536", 0.40, 0.45)
-        range_1536_rmse_10 = get_range_count_rmse(arg, "1536", 0.45, 0.50)
-        range_1536_rmse_11 = get_range_count_rmse(arg, "1536", 0.50, 1.00)
+        range_1536_rmse_1  = self.get_range_count_rmse(arg, "1536", 0, 0.05)
+        range_1536_rmse_2  = self.get_range_count_rmse(arg, "1536", 0.05, 0.10)
+        range_1536_rmse_3  = self.get_range_count_rmse(arg, "1536", 0.10, 0.15)
+        range_1536_rmse_4  = self.get_range_count_rmse(arg, "1536", 0.15, 0.20)
+        range_1536_rmse_5  = self.get_range_count_rmse(arg, "1536", 0.20, 0.25)
+        range_1536_rmse_6  = self.get_range_count_rmse(arg, "1536", 0.25, 0.30)
+        range_1536_rmse_7  = self.get_range_count_rmse(arg, "1536", 0.30, 0.35)
+        range_1536_rmse_8  = self.get_range_count_rmse(arg, "1536", 0.35, 0.40)
+        range_1536_rmse_9  = self.get_range_count_rmse(arg, "1536", 0.40, 0.45)
+        range_1536_rmse_10 = self.get_range_count_rmse(arg, "1536", 0.45, 0.50)
+        range_1536_rmse_11 = self.get_range_count_rmse(arg, "1536", 0.50, 1.00)
 
 
         # get deciles from mae
-        range_12_mae_1  = get_range_count_mae(arg, "12", 0, 0.05)
-        range_12_mae_2  = get_range_count_mae(arg, "12", 0.05, 0.10)
-        range_12_mae_3  = get_range_count_mae(arg, "12", 0.10, 0.15)
-        range_12_mae_4  = get_range_count_mae(arg, "12", 0.15, 0.20)
-        range_12_mae_5  = get_range_count_mae(arg, "12", 0.20, 0.25)
-        range_12_mae_6  = get_range_count_mae(arg, "12", 0.25, 0.30)
-        range_12_mae_7  = get_range_count_mae(arg, "12", 0.30, 0.35)
-        range_12_mae_8  = get_range_count_mae(arg, "12", 0.35, 0.40)
-        range_12_mae_9  = get_range_count_mae(arg, "12", 0.40, 0.45)
-        range_12_mae_10 = get_range_count_mae(arg, "12", 0.45, 0.50)
-        range_12_mae_11 = get_range_count_mae(arg, "12", 0.50, 1.00)
+        range_12_mae_1  = self.get_range_count_mae(arg, "12", 0, 0.05)
+        range_12_mae_2  = self.get_range_count_mae(arg, "12", 0.05, 0.10)
+        range_12_mae_3  = self.get_range_count_mae(arg, "12", 0.10, 0.15)
+        range_12_mae_4  = self.get_range_count_mae(arg, "12", 0.15, 0.20)
+        range_12_mae_5  = self.get_range_count_mae(arg, "12", 0.20, 0.25)
+        range_12_mae_6  = self.get_range_count_mae(arg, "12", 0.25, 0.30)
+        range_12_mae_7  = self.get_range_count_mae(arg, "12", 0.30, 0.35)
+        range_12_mae_8  = self.get_range_count_mae(arg, "12", 0.35, 0.40)
+        range_12_mae_9  = self.get_range_count_mae(arg, "12", 0.40, 0.45)
+        range_12_mae_10 = self.get_range_count_mae(arg, "12", 0.45, 0.50)
+        range_12_mae_11 = self.get_range_count_mae(arg, "12", 0.50, 1.00)
 
-        range_24_mae_1  = get_range_count_mae(arg, "24", 0, 0.05)
-        range_24_mae_2  = get_range_count_mae(arg, "24", 0.05, 0.10)
-        range_24_mae_3  = get_range_count_mae(arg, "24", 0.10, 0.15)
-        range_24_mae_4  = get_range_count_mae(arg, "24", 0.15, 0.20)
-        range_24_mae_5  = get_range_count_mae(arg, "24", 0.20, 0.25)
-        range_24_mae_6  = get_range_count_mae(arg, "24", 0.25, 0.30)
-        range_24_mae_7  = get_range_count_mae(arg, "24", 0.30, 0.35)
-        range_24_mae_8  = get_range_count_mae(arg, "24", 0.35, 0.40)
-        range_24_mae_9  = get_range_count_mae(arg, "24", 0.40, 0.45)
-        range_24_mae_10 = get_range_count_mae(arg, "24", 0.45, 0.50)
-        range_24_mae_11 = get_range_count_mae(arg, "24", 0.50, 1.00)
+        range_24_mae_1  = self.get_range_count_mae(arg, "24", 0, 0.05)
+        range_24_mae_2  = self.get_range_count_mae(arg, "24", 0.05, 0.10)
+        range_24_mae_3  = self.get_range_count_mae(arg, "24", 0.10, 0.15)
+        range_24_mae_4  = self.get_range_count_mae(arg, "24", 0.15, 0.20)
+        range_24_mae_5  = self.get_range_count_mae(arg, "24", 0.20, 0.25)
+        range_24_mae_6  = self.get_range_count_mae(arg, "24", 0.25, 0.30)
+        range_24_mae_7  = self.get_range_count_mae(arg, "24", 0.30, 0.35)
+        range_24_mae_8  = self.get_range_count_mae(arg, "24", 0.35, 0.40)
+        range_24_mae_9  = self.get_range_count_mae(arg, "24", 0.40, 0.45)
+        range_24_mae_10 = self.get_range_count_mae(arg, "24", 0.45, 0.50)
+        range_24_mae_11 = self.get_range_count_mae(arg, "24", 0.50, 1.00)
 
-        range_48_mae_1  = get_range_count_mae(arg, "48", 0, 0.05)
-        range_48_mae_2  = get_range_count_mae(arg, "48", 0.05, 0.10)
-        range_48_mae_3  = get_range_count_mae(arg, "48", 0.10, 0.15)
-        range_48_mae_4  = get_range_count_mae(arg, "48", 0.15, 0.20)
-        range_48_mae_5  = get_range_count_mae(arg, "48", 0.20, 0.25)
-        range_48_mae_6  = get_range_count_mae(arg, "48", 0.25, 0.30)
-        range_48_mae_7  = get_range_count_mae(arg, "48", 0.30, 0.35)
-        range_48_mae_8  = get_range_count_mae(arg, "48", 0.35, 0.40)
-        range_48_mae_9  = get_range_count_mae(arg, "48", 0.40, 0.45)
-        range_48_mae_10 = get_range_count_mae(arg, "48", 0.45, 0.50)
-        range_48_mae_11 = get_range_count_mae(arg, "48", 0.50, 1.00)
+        range_48_mae_1  = self.get_range_count_mae(arg, "48", 0, 0.05)
+        range_48_mae_2  = self.get_range_count_mae(arg, "48", 0.05, 0.10)
+        range_48_mae_3  = self.get_range_count_mae(arg, "48", 0.10, 0.15)
+        range_48_mae_4  = self.get_range_count_mae(arg, "48", 0.15, 0.20)
+        range_48_mae_5  = self.get_range_count_mae(arg, "48", 0.20, 0.25)
+        range_48_mae_6  = self.get_range_count_mae(arg, "48", 0.25, 0.30)
+        range_48_mae_7  = self.get_range_count_mae(arg, "48", 0.30, 0.35)
+        range_48_mae_8  = self.get_range_count_mae(arg, "48", 0.35, 0.40)
+        range_48_mae_9  = self.get_range_count_mae(arg, "48", 0.40, 0.45)
+        range_48_mae_10 = self.get_range_count_mae(arg, "48", 0.45, 0.50)
+        range_48_mae_11 = self.get_range_count_mae(arg, "48", 0.50, 1.00)
 
-        range_96_mae_1  = get_range_count_mae(arg, "96", 0, 0.05)
-        range_96_mae_2  = get_range_count_mae(arg, "96", 0.05, 0.10)
-        range_96_mae_3  = get_range_count_mae(arg, "96", 0.10, 0.15)
-        range_96_mae_4  = get_range_count_mae(arg, "96", 0.15, 0.20)
-        range_96_mae_5  = get_range_count_mae(arg, "96", 0.20, 0.25)
-        range_96_mae_6  = get_range_count_mae(arg, "96", 0.25, 0.30)
-        range_96_mae_7  = get_range_count_mae(arg, "96", 0.30, 0.35)
-        range_96_mae_8  = get_range_count_mae(arg, "96", 0.35, 0.40)
-        range_96_mae_9  = get_range_count_mae(arg, "96", 0.40, 0.45)
-        range_96_mae_10 = get_range_count_mae(arg, "96", 0.45, 0.50)
-        range_96_mae_11 = get_range_count_mae(arg, "96", 0.50, 1.00)
+        range_96_mae_1  = self.get_range_count_mae(arg, "96", 0, 0.05)
+        range_96_mae_2  = self.get_range_count_mae(arg, "96", 0.05, 0.10)
+        range_96_mae_3  = self.get_range_count_mae(arg, "96", 0.10, 0.15)
+        range_96_mae_4  = self.get_range_count_mae(arg, "96", 0.15, 0.20)
+        range_96_mae_5  = self.get_range_count_mae(arg, "96", 0.20, 0.25)
+        range_96_mae_6  = self.get_range_count_mae(arg, "96", 0.25, 0.30)
+        range_96_mae_7  = self.get_range_count_mae(arg, "96", 0.30, 0.35)
+        range_96_mae_8  = self.get_range_count_mae(arg, "96", 0.35, 0.40)
+        range_96_mae_9  = self.get_range_count_mae(arg, "96", 0.40, 0.45)
+        range_96_mae_10 = self.get_range_count_mae(arg, "96", 0.45, 0.50)
+        range_96_mae_11 = self.get_range_count_mae(arg, "96", 0.50, 1.00)
 
-        range_192_mae_1  = get_range_count_mae(arg, "192", 0, 0.05)
-        range_192_mae_2  = get_range_count_mae(arg, "192", 0.05, 0.10)
-        range_192_mae_3  = get_range_count_mae(arg, "192", 0.10, 0.15)
-        range_192_mae_4  = get_range_count_mae(arg, "192", 0.15, 0.20)
-        range_192_mae_5  = get_range_count_mae(arg, "192", 0.20, 0.25)
-        range_192_mae_6  = get_range_count_mae(arg, "192", 0.25, 0.30)
-        range_192_mae_7  = get_range_count_mae(arg, "192", 0.30, 0.35)
-        range_192_mae_8  = get_range_count_mae(arg, "192", 0.35, 0.40)
-        range_192_mae_9  = get_range_count_mae(arg, "192", 0.40, 0.45)
-        range_192_mae_10 = get_range_count_mae(arg, "192", 0.45, 0.50)
-        range_192_mae_11 = get_range_count_mae(arg, "192", 0.50, 1.00)
+        range_192_mae_1  = self.get_range_count_mae(arg, "192", 0, 0.05)
+        range_192_mae_2  = self.get_range_count_mae(arg, "192", 0.05, 0.10)
+        range_192_mae_3  = self.get_range_count_mae(arg, "192", 0.10, 0.15)
+        range_192_mae_4  = self.get_range_count_mae(arg, "192", 0.15, 0.20)
+        range_192_mae_5  = self.get_range_count_mae(arg, "192", 0.20, 0.25)
+        range_192_mae_6  = self.get_range_count_mae(arg, "192", 0.25, 0.30)
+        range_192_mae_7  = self.get_range_count_mae(arg, "192", 0.30, 0.35)
+        range_192_mae_8  = self.get_range_count_mae(arg, "192", 0.35, 0.40)
+        range_192_mae_9  = self.get_range_count_mae(arg, "192", 0.40, 0.45)
+        range_192_mae_10 = self.get_range_count_mae(arg, "192", 0.45, 0.50)
+        range_192_mae_11 = self.get_range_count_mae(arg, "192", 0.50, 1.00)
 
-        range_384_mae_1  = get_range_count_mae(arg, "384", 0, 0.05)
-        range_384_mae_2  = get_range_count_mae(arg, "384", 0.05, 0.10)
-        range_384_mae_3  = get_range_count_mae(arg, "384", 0.10, 0.15)
-        range_384_mae_4  = get_range_count_mae(arg, "384", 0.15, 0.20)
-        range_384_mae_5  = get_range_count_mae(arg, "384", 0.20, 0.25)
-        range_384_mae_6  = get_range_count_mae(arg, "384", 0.25, 0.30)
-        range_384_mae_7  = get_range_count_mae(arg, "384", 0.30, 0.35)
-        range_384_mae_8  = get_range_count_mae(arg, "384", 0.35, 0.40)
-        range_384_mae_9  = get_range_count_mae(arg, "384", 0.40, 0.45)
-        range_384_mae_10 = get_range_count_mae(arg, "384", 0.45, 0.50)
-        range_384_mae_11 = get_range_count_mae(arg, "384", 0.50, 1.00)
+        range_384_mae_1  = self.get_range_count_mae(arg, "384", 0, 0.05)
+        range_384_mae_2  = self.get_range_count_mae(arg, "384", 0.05, 0.10)
+        range_384_mae_3  = self.get_range_count_mae(arg, "384", 0.10, 0.15)
+        range_384_mae_4  = self.get_range_count_mae(arg, "384", 0.15, 0.20)
+        range_384_mae_5  = self.get_range_count_mae(arg, "384", 0.20, 0.25)
+        range_384_mae_6  = self.get_range_count_mae(arg, "384", 0.25, 0.30)
+        range_384_mae_7  = self.get_range_count_mae(arg, "384", 0.30, 0.35)
+        range_384_mae_8  = self.get_range_count_mae(arg, "384", 0.35, 0.40)
+        range_384_mae_9  = self.get_range_count_mae(arg, "384", 0.40, 0.45)
+        range_384_mae_10 = self.get_range_count_mae(arg, "384", 0.45, 0.50)
+        range_384_mae_11 = self.get_range_count_mae(arg, "384", 0.50, 1.00)
 
-        range_768_mae_1  = get_range_count_mae(arg, "768", 0, 0.05)
-        range_768_mae_2  = get_range_count_mae(arg, "768", 0.05, 0.10)
-        range_768_mae_3  = get_range_count_mae(arg, "768", 0.10, 0.15)
-        range_768_mae_4  = get_range_count_mae(arg, "768", 0.15, 0.20)
-        range_768_mae_5  = get_range_count_mae(arg, "768", 0.20, 0.25)
-        range_768_mae_6  = get_range_count_mae(arg, "768", 0.25, 0.30)
-        range_768_mae_7  = get_range_count_mae(arg, "768", 0.30, 0.35)
-        range_768_mae_8  = get_range_count_mae(arg, "768", 0.35, 0.40)
-        range_768_mae_9  = get_range_count_mae(arg, "768", 0.40, 0.45)
-        range_768_mae_10 = get_range_count_mae(arg, "768", 0.45, 0.50)
-        range_768_mae_11 = get_range_count_mae(arg, "768", 0.50, 1.00)
+        range_768_mae_1  = self.get_range_count_mae(arg, "768", 0, 0.05)
+        range_768_mae_2  = self.get_range_count_mae(arg, "768", 0.05, 0.10)
+        range_768_mae_3  = self.get_range_count_mae(arg, "768", 0.10, 0.15)
+        range_768_mae_4  = self.get_range_count_mae(arg, "768", 0.15, 0.20)
+        range_768_mae_5  = self.get_range_count_mae(arg, "768", 0.20, 0.25)
+        range_768_mae_6  = self.get_range_count_mae(arg, "768", 0.25, 0.30)
+        range_768_mae_7  = self.get_range_count_mae(arg, "768", 0.30, 0.35)
+        range_768_mae_8  = self.get_range_count_mae(arg, "768", 0.35, 0.40)
+        range_768_mae_9  = self.get_range_count_mae(arg, "768", 0.40, 0.45)
+        range_768_mae_10 = self.get_range_count_mae(arg, "768", 0.45, 0.50)
+        range_768_mae_11 = self.get_range_count_mae(arg, "768", 0.50, 1.00)
 
-        range_1536_mae_1  = get_range_count_mae(arg, "1536", 0, 0.05)
-        range_1536_mae_2  = get_range_count_mae(arg, "1536", 0.05, 0.10)
-        range_1536_mae_3  = get_range_count_mae(arg, "1536", 0.10, 0.15)
-        range_1536_mae_4  = get_range_count_mae(arg, "1536", 0.15, 0.20)
-        range_1536_mae_5  = get_range_count_mae(arg, "1536", 0.20, 0.25)
-        range_1536_mae_6  = get_range_count_mae(arg, "1536", 0.25, 0.30)
-        range_1536_mae_7  = get_range_count_mae(arg, "1536", 0.30, 0.35)
-        range_1536_mae_8  = get_range_count_mae(arg, "1536", 0.35, 0.40)
-        range_1536_mae_9  = get_range_count_mae(arg, "1536", 0.40, 0.45)
-        range_1536_mae_10 = get_range_count_mae(arg, "1536", 0.45, 0.50)
-        range_1536_mae_11 = get_range_count_mae(arg, "1536", 0.50, 1.00)
+        range_1536_mae_1  = self.get_range_count_mae(arg, "1536", 0, 0.05)
+        range_1536_mae_2  = self.get_range_count_mae(arg, "1536", 0.05, 0.10)
+        range_1536_mae_3  = self.get_range_count_mae(arg, "1536", 0.10, 0.15)
+        range_1536_mae_4  = self.get_range_count_mae(arg, "1536", 0.15, 0.20)
+        range_1536_mae_5  = self.get_range_count_mae(arg, "1536", 0.20, 0.25)
+        range_1536_mae_6  = self.get_range_count_mae(arg, "1536", 0.25, 0.30)
+        range_1536_mae_7  = self.get_range_count_mae(arg, "1536", 0.30, 0.35)
+        range_1536_mae_8  = self.get_range_count_mae(arg, "1536", 0.35, 0.40)
+        range_1536_mae_9  = self.get_range_count_mae(arg, "1536", 0.40, 0.45)
+        range_1536_mae_10 = self.get_range_count_mae(arg, "1536", 0.45, 0.50)
+        range_1536_mae_11 = self.get_range_count_mae(arg, "1536", 0.50, 1.00)
 
         # print deciles
         with open(output_file, "w") as file:
