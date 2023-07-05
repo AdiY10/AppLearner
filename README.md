@@ -6,6 +6,17 @@ AppLearner is a deep learning project that aims to address the challenge of accu
 
 In real-life applications, manually estimating resource consumption patterns can be a difficult task, leading to suboptimal resource provisioning. While there are existing solutions that adaptively scale pods based on on-the-fly monitoring, they may prove inefficient when the application behavior is highly dynamic. AppLearner takes a proactive approach by leveraging deep learning techniques to learn and predict resource consumption patterns over time. By analyzing time-series CPU/memory usage data provided by Prometheus, AppLearner aims to generate accurate resource provisioning plans for applications.
 
+## Example: Predicting Resource Consumption
+
+To illustrate the goal of AppLearner, consider the example of monitoring the CPU consumption of a specific application over time. In the image below, we present a graph depicting the CPU consumption of the application over several points.
+
+![Example CPU Consumption Graph](example_graph.png)
+
+The objective of AppLearner is to accurately predict the future resource consumption of the application. By training Univariate Deep Learning time series models, we can learn patterns in CPU consumption and forecast its behavior in the next minutes, hours, and days. This predictive capability enables proactive resource provisioning and efficient management of the application's resource requirements.
+
+Expanding on the current models, the next step in AppLearner's development is to create Multivariate Deep Learning models. These models will incorporate multiple features, such as CPU, Memory, Timestamp, and other relevant metrics, to provide more comprehensive predictions and better align resource provisioning with application demands.
+
+
 ## Background
 
 ### Kubernetes (Kubernetes or K8s)
@@ -47,7 +58,6 @@ This repository contains the following folders:
 3. **TrainedModels**: This folder contains pre-trained model weights that can be used for inference or as a starting point for further training. These models have been trained on sample datasets and can be utilized for experimentation and testing.
 
 4. **Notebooks**: The Notebooks folder contains Jupyter notebooks that demonstrate the usage and testing of each model. These notebooks provide a step-by-step guide on how to load data, train models, and evaluate their performance. Feel free to explore and experiment with these notebooks to gain a better understanding of the models and their capabilities.
-
 
 ## Work in Progress
 
