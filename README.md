@@ -18,17 +18,13 @@ Expanding on the current models, the next step in AppLearner's development is to
 
 ## Example Results: Predicting CPU Consumption
 
-Here, you can see two photos that demonstrate the ability of one of our models to predict the future consumption of the CPU over time. The X-axis represents the time of the samples, and the Y-axis represents the CPU consumption values. The blue line represents the real samples, while the red line represents our predictions.
+Below, we present two photos showcasing the predictive ability of one of our models in estimating CPU consumption over time. The X-axis represents the time of the samples, and the Y-axis presents the CPU consumption values.
 
 ![Real Samples vs. Predictions - Example 1](Images/Predictions1.png)
 
-In the first photo, our model successfully identifies the patterns in the data and accurately predicts the future CPU consumption, even in extreme cases.
-
 ![Real Samples vs. Predictions - Example 2](Images/Predictions2.png)
 
-Similarly, in the second photo, our model captures the underlying patterns in the CPU consumption and provides accurate predictions, aligning with the real samples.
-
-These results showcase the effectiveness of our models in understanding the data patterns and forecasting future resource consumption accurately.
+As evident from the results, our model effectively identifies underlying patterns in the data and predicts future consumption accurately, even in extreme cases. These successful predictions demonstrate the potential of 'AppLearner' to optimize resource allocation and enhance the efficiency of applications running on Kubernetes.
 
 ## Background
 
