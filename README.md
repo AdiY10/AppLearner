@@ -36,6 +36,19 @@ A namespace in Kubernetes is a virtual cluster that provides a way to divide a p
 
 Prometheus is an open-source monitoring system commonly used in Kubernetes environments. It collects and stores time-series data on various aspects of the system, including pods, nodes, and other resources. Prometheus provides a rich set of metrics, such as CPU usage and memory usage, allowing users to gain insights into their applications' performance and troubleshoot issues in real time. By integrating with Prometheus, AppLearner leverages these metrics to analyze resource consumption patterns and make informed decisions for resource provisioning.
 
+## Folders in the Repository
+
+This repository contains the following folders:
+
+1. **src**: This folder contains Python scripts that are used to train and run all the models. Within this folder, you will find the code responsible for data preprocessing and model training.
+
+2. **data**: The data folder is where you should place the data required for training and testing the models. 
+
+3. **TrainedModels**: This folder contains pre-trained model weights that can be used for inference or as a starting point for further training. These models have been trained on sample datasets and can be utilized for experimentation and testing.
+
+4. **Notebooks**: The Notebooks folder contains Jupyter notebooks that demonstrate the usage and testing of each model. These notebooks provide a step-by-step guide on how to load data, train models, and evaluate their performance. Feel free to explore and experiment with these notebooks to gain a better understanding of the models and their capabilities.
+
+
 ## Work in Progress
 
 Please note that this README file is a work in progress. The project is still under active development, and additional information, including detailed instructions, usage examples, and results, will be added in subsequent updates. Stay tuned for further updates and releases!
