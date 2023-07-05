@@ -1,33 +1,42 @@
-# AppLearner - WIP
+# AppLearner - Work In Progress
 
-AppLearner is a project that addresses the challenge of accurately estimating resource requirements for workloads running on the Red Hat OpenShift Container Platform. The project aims to adjust these estimations during the course of application execution to avoid under- and overutilization. For many real-life applications, manually estimating resource consumption patterns and tuning pod CPU and memory requirements accordingly can be difficult. Existing solutions that adaptively scale pods based on on-the-fly monitoring can be inefficient when dealing with highly dynamic application behavior. Instead, AppLearner takes a proactive approach by defining a provisioning plan for an application through learning and predicting its resource consumption patterns over time. To accomplish this, the project utilizes time-series CPU/Memory usage data provided by Prometheus to learn and forecast future resource usage.
+## Project Overview
+
+AppLearner is a deep learning project that aims to address the challenge of accurately estimating resource requirements for workloads running on the Red Hat OpenShift Container Platform. The objective is to dynamically adjust these estimations during the course of application execution, optimizing resource utilization and avoiding under- and overutilization scenarios.
+
+In real-life applications, manually estimating resource consumption patterns can be a difficult task, leading to suboptimal resource provisioning. While there are existing solutions that adaptively scale pods based on on-the-fly monitoring, they may prove inefficient when the application behavior is highly dynamic. AppLearner takes a proactive approach by leveraging deep learning techniques to learn and predict resource consumption patterns over time. By analyzing time-series CPU/memory usage data provided by Prometheus, AppLearner aims to generate accurate resource provisioning plans for applications.
 
 ## Background
 
-### Kubernetes (K8)
+### Kubernetes (Kubernetes or K8s)
 
-Kubernetes is an open-source software platform used for managing, automating, deploying, and hosting containerized applications. It provides a robust framework for managing containerized workloads and services, making it easier to scale, update, and maintain applications in a distributed environment.
+Kubernetes is an open-source software platform used for managing, automating, deploying, and hosting containerized applications. It provides a framework for running and coordinating containerized workloads across a cluster of machines. Key concepts in Kubernetes include:
 
-### Kubernetes Cluster
+#### Kubernetes Cluster
 
-A Kubernetes cluster is a collection of node machines that are responsible for running containerized applications. When working with Kubernetes, you operate within the context of a cluster. The cluster manages the deployment and execution of your applications, ensuring high availability and scalability.
+A Kubernetes cluster is a collection of nodes that work together to run containerized applications. It consists of one or more master nodes responsible for managing the cluster and multiple worker nodes that execute the applications. Running a Kubernetes cluster allows you to harness the power of containerization and orchestration for efficient application deployment and scaling.
 
-### Kubernetes Node
+#### Kubernetes Node
 
-A Kubernetes node refers to a physical or virtual machine within a cluster that runs pods. Pods are the smallest deployable units of the Kubernetes ecosystem, representing one or more containers running together. Nodes provide the necessary resources and services to execute your application containers, including the container runtime and other essential components.
+Nodes are the individual machines (physical or virtual) that form part of a Kubernetes cluster. They serve as the execution environment for pods, which are the smallest deployable units in Kubernetes. Each node has all the necessary components, such as the container runtime and other essential services, to run your application containers.
 
-### Kubernetes Pod
+#### Kubernetes Pod
 
-A Kubernetes pod is the fundamental unit of execution in Kubernetes. It represents a group of one or more containers that are deployed together on a cluster. Pods enable co-location and communication between containers within the same logical application. Each pod has its own unique IP address and shares the same network namespace, allowing containers within a pod to communicate with each other using localhost.
+A pod is a fundamental building block in the Kubernetes ecosystem. It represents a group of one or more containers that are tightly coupled and share resources within the same execution context. Pods are scheduled and run on nodes within the cluster. They provide a way to encapsulate and manage containers as a single cohesive unit, allowing applications to run efficiently and be scaled easily.
 
-### Kubernetes Container
+#### Kubernetes Container
 
-A Kubernetes container is a lightweight, standalone, and executable software package that includes everything needed to run a specific task or application. Containers provide a consistent runtime environment by bundling the application code, dependencies, libraries, and configuration files together. They offer portability and reproducibility, ensuring consistent behavior regardless of the underlying infrastructure.
+In Kubernetes, a container refers to a standardized, lightweight, and isolated runtime environment for running a specific task or application. Containers package the application code along with its dependencies, libraries, and configuration, enabling consistent behavior regardless of the underlying infrastructure.
 
-### Kubernetes Namespace
+#### Kubernetes Namespace
 
-In Kubernetes, a namespace is a virtual cluster that provides a scope for resources. Namespaces allow you to logically divide a physical cluster into multiple virtual clusters, making it easier to manage and organize your applications. Each namespace has its own set of resources, such as pods, services, and configuration, providing isolation and separation between different teams or projects within the same physical cluster.
+A namespace in Kubernetes is a virtual cluster that provides a way to divide a physical cluster into multiple logical clusters. Namespaces enable different teams or projects to coexist within the same Kubernetes cluster while isolating resources and providing a level of separation. They help in organizing and managing complex deployments with multiple applications running concurrently.
 
-## Prometheus
+### Prometheus
 
-Prometheus is an open-source monitoring system widely used in the Kubernetes ecosystem. It collects time-series data on various aspects of a Kubernetes cluster, including running pods, nodes, and more. Prometheus gathers metrics such as CPU usage and memory usage, providing real-time insights into the performance and health of applications. This data helps users troubleshoot issues, optimize resource allocation, and gain a comprehensive understanding of their applications' behavior.
+Prometheus is an open-source monitoring system commonly used in Kubernetes environments. It collects and stores time-series data on various aspects of the system, including pods, nodes, and other resources. Prometheus provides a rich set of metrics, such as CPU usage and memory usage, allowing users to gain insights into their applications' performance and troubleshoot issues in real time. By integrating with Prometheus, AppLearner leverages these metrics to analyze resource consumption patterns and make informed decisions for resource provisioning.
+
+## Work in Progress
+
+Please note that this README file is a work in progress. The project is still under active development, and additional information, including detailed instructions, usage examples, and results, will be added in subsequent updates. Stay tuned for further updates and releases!
+
