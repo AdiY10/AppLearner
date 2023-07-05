@@ -10,7 +10,7 @@ In real-life applications, manually estimating resource consumption patterns can
 
 To illustrate the goal of AppLearner, consider the example of monitoring the CPU consumption of a specific application over time. In the image below, we present a graph depicting the CPU consumption of the application over several points.
 
-![Example CPU Consumption Graph](example_graph.png)
+![Example CPU Consumption Graph](Images/Example-AppLearner.png)
 
 The objective of AppLearner is to accurately predict the future resource consumption of the application. By training Univariate Deep Learning time series models, we can learn patterns in CPU consumption and forecast its behavior in the next minutes, hours, and days. This predictive capability enables proactive resource provisioning and efficient management of the application's resource requirements.
 
