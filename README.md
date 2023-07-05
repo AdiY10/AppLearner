@@ -1,27 +1,33 @@
-# AppLearner- WIP
+# AppLearner - WIP
 
-This project targets the problem of accurately estimating resource requirements for workloads running over Red Hat OpenShift Container Platform and adjusting these estimations during the course of application execution. For a majority of real-life applications, it is notoriously difficult to manually estimate the patterns of resource consumption and thus to tune the pod CPU/memory requirements accordingly to avoid under- and overutilization. While there are attempts to solve this problem by on-the-fly monitoring and adaptively scaling pods when changes are detected, these solutions could be inefficient when the application behavior is highly dynamic. Instead, AppLearner is proactively defining the provisioning plan for an application by learning and predicting its resource consumption patterns over time.
-We will use time-series CPU/Memory usage data provided by Prometheus to learn and forecast future resource usage.
+AppLearner is a project that addresses the challenge of accurately estimating resource requirements for workloads running on the Red Hat OpenShift Container Platform. The project aims to adjust these estimations during the course of application execution to avoid under- and overutilization. For many real-life applications, manually estimating resource consumption patterns and tuning pod CPU and memory requirements accordingly can be difficult. Existing solutions that adaptively scale pods based on on-the-fly monitoring can be inefficient when dealing with highly dynamic application behavior. Instead, AppLearner takes a proactive approach by defining a provisioning plan for an application through learning and predicting its resource consumption patterns over time. To accomplish this, the project utilizes time-series CPU/Memory usage data provided by Prometheus to learn and forecast future resource usage.
 
-## Background:
-K8 is an open source software that manages, automates, deploys and hosts containerized applications.
+## Background
 
-#### What is a K8 Cluster-
-A Kubernetes cluster is a set of node machines for running containerized applications. If you’re running Kubernetes, you’re running a cluster.
+### Kubernetes (K8)
 
-#### What is a K8 Node-
-Nodes are comprised of physical or virtual machines on the cluster that run the pods; these “worker” machines have everything necessary to run your application containers, including the container runtime and other critical services.
+Kubernetes is an open-source software platform used for managing, automating, deploying, and hosting containerized applications. It provides a robust framework for managing containerized workloads and services, making it easier to scale, update, and maintain applications in a distributed environment.
 
-#### What is a K8 Pod-
-This is essentially the smallest deployable unit of the Kubernetes ecosystem. A pod specifically represents a group of one or more containers running together on your cluster.
+### Kubernetes Cluster
 
-#### What is a K8 Container-
-Each container that you run is repeatable; the standardization from having dependencies included means that you get the same behavior wherever and wherever you run it.
-consists of an entire runtime environment of a task. Such as the application code, needed libraries and more.
+A Kubernetes cluster is a collection of node machines that are responsible for running containerized applications. When working with Kubernetes, you operate within the context of a cluster. The cluster manages the deployment and execution of your applications, ensuring high availability and scalability.
 
-#### What is a K8 Namespace-
-A virtual cluster. Namespaces allow Kubernetes to manage multiple clusters (for multiple teams or projects) within the same physical cluster.
+### Kubernetes Node
 
+A Kubernetes node refers to a physical or virtual machine within a cluster that runs pods. Pods are the smallest deployable units of the Kubernetes ecosystem, representing one or more containers running together. Nodes provide the necessary resources and services to execute your application containers, including the container runtime and other essential components.
 
-### Prometheus:
-Prometheus is an open-source monitoring system. Prometheus uses Kubernetes and collects time-series data on running pods, nodes and more. The collected metrics are CPU usage, Memory usage. The data collected gives the users an apprehensive insight into their applications whilst providing real-time metrics that would help them problem-solve.
+### Kubernetes Pod
+
+A Kubernetes pod is the fundamental unit of execution in Kubernetes. It represents a group of one or more containers that are deployed together on a cluster. Pods enable co-location and communication between containers within the same logical application. Each pod has its own unique IP address and shares the same network namespace, allowing containers within a pod to communicate with each other using localhost.
+
+### Kubernetes Container
+
+A Kubernetes container is a lightweight, standalone, and executable software package that includes everything needed to run a specific task or application. Containers provide a consistent runtime environment by bundling the application code, dependencies, libraries, and configuration files together. They offer portability and reproducibility, ensuring consistent behavior regardless of the underlying infrastructure.
+
+### Kubernetes Namespace
+
+In Kubernetes, a namespace is a virtual cluster that provides a scope for resources. Namespaces allow you to logically divide a physical cluster into multiple virtual clusters, making it easier to manage and organize your applications. Each namespace has its own set of resources, such as pods, services, and configuration, providing isolation and separation between different teams or projects within the same physical cluster.
+
+## Prometheus
+
+Prometheus is an open-source monitoring system widely used in the Kubernetes ecosystem. It collects time-series data on various aspects of a Kubernetes cluster, including running pods, nodes, and more. Prometheus gathers metrics such as CPU usage and memory usage, providing real-time insights into the performance and health of applications. This data helps users troubleshoot issues, optimize resource allocation, and gain a comprehensive understanding of their applications' behavior.
