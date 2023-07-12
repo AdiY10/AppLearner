@@ -22,58 +22,70 @@ class LSTM:
             application_name=self.app_to_test,
             path_to_data=path_to_data
         )
+        self.use_cuda = True
     def train_model(self):
+        dropout_rate = 0.2
         # Normalize data
-        scaler = MinMaxScaler()
-        for i in range(len(self.dataset)):
-            self.dataset[i]['sample'] = scaler.fit_transform(self.dataset[i][['sample']])
+        scaler_train = MinMaxScaler()
+        for i in range(0, int(len(self.dataset))):
+            self.dataset[i]['sample'] = scaler_train.fit_transform(self.dataset[i][['sample']])
 
-        # generate input and output sequences
-        n_lookback = 12
-        n_forecast = 12
+        # Set the Lookback and horizon parameters
+        lookback = 12
+        horizon = 12
 
-        # build LSTM model
+        # fit the model
         model = Sequential()
         model.add(LSTM(units=64, return_sequences=True, input_shape=(n_lookback, 1)))
-        model.add(Dropout(0.2))
+        model.add(Dropout(dropout_rate))  # Adding dropout for regularization
         model.add(LSTM(units=64, return_sequences=False))
-        model.add(Dropout(0.2))
-        model.add(Dense(units=n_forecast))
+        model.add(Dropout(dropout_rate))  # Adding dropout for regularization
+        model.add(LSTM(units=64))
+        model.add(Dense(units=horizon))
 
         # model compilation
+        if self.use_cuda:
+            import torch
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            model.to(device)
+
         model.compile(loss='mse', optimizer='adam')
 
-        # Train model for each sequence in dataset
-        for df in self.dataset:
-            # Create input and output sequences
-            X, y = [], []
-            for i in range(len(df) - n_lookback - n_forecast + 1):
-                X.append(df.iloc[i:i + n_lookback, 0].values.reshape(-1, 1))
-                y.append(df.iloc[i + n_lookback:i + n_lookback + n_forecast, 0].values.reshape(-1, 1))
-            X = np.array(X)
-            y = np.array(y)
+        X = []
+        Y = []
 
-            # Split data into training and testing sets
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=False)
+        for i in range(0, int(len(self.dataset) * 0.7)):
 
-            # train the model
-            history = model.fit(X_train, y_train, epochs=50, batch_size=32, validation_data=(X_test, y_test), verbose=2)
+            data_train = self.dataset[i]
+            ## fill N/A values
+            y = data_train['sample'].fillna(method='ffill')
+            y = y.values.reshape(-1, 1)
 
-        # evaluate the model
-        score = model.evaluate(X_test, y_test, verbose=0)
-        print(f'Test loss: {score}')
+            if lookback < (len(y) - horizon + 1):
+                continue
+
+            for j in range(lookback, len(y) - horizon + 1):
+                X.append(y[j - lookback: j])
+                Y.append(y[j: j + horizon])
+
+        X = np.array(X)
+        Y = np.array(Y)
+
+        # train model
+        model.fit(X, Y, epochs=100, batch_size=128, verbose=2)
+
 
     def save_model(self, model):
         # save trained model
-        model.save('collector_12_12.h5')
+        model.save('collector_12min.h5')
 
         # serialize model to JSON
         model_json = model.to_json()
-        with open("collector_12_12.json", "w") as json_file:
+        with open("collector_12min.json", "w") as json_file:
             json_file.write(model_json)
 
         # serialize weights to HDF5
-        model.save_weights("collector_12_12.h5")
+        model.save_weights("collector_12min.h5")
         print("Model saved to disk")
 
     def predict_values(self, sys3, sys4, dataset_test, file):
@@ -81,9 +93,6 @@ class LSTM:
         n_lookback = int(sys3)  # length of input sequences (lookback period)
         n_forecast = int(sys4)  # length of output sequences (forecast period)
 
-        # trained model file to load
-        # file = sys.argv[2]+"_"+sys3+"_"+sys4
-        # file = "check2"
         # load json and create model
         json_file = open(file + ".json", 'r')
         loaded_model_json = json_file.read()

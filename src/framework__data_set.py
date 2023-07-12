@@ -25,7 +25,7 @@ class TimeSeriesDataSet:
     """
 
     def __init__(self, list_of_df):
-        self.__list_of_df = list_of_df
+        self.list_of_df = list_of_df
         self.__is_data_scaled = False
         self.__mean = None
         self.__std = None
@@ -37,7 +37,7 @@ class TimeSeriesDataSet:
     """
 
     def get_list(self):
-        return self.__list_of_df
+        return self.list_of_df
 
     def __get_mean_and_std(self):
         """
@@ -57,17 +57,17 @@ class TimeSeriesDataSet:
     """
 
     def __getitem__(self, key):
-        return self.__list_of_df[key]
+        return self.list_of_df[key]
 
     def __len__(self):
-        return len(self.__list_of_df)
+        return len(self.list_of_df)
 
     def merge_df(self):
         """
         concat all the dataframes of the same application
         """
         # todo: fix the merging of same apps on different pods and namespaces
-        self.merged_df = pd.concat(self.__list_of_df)
+        self.merged_df = pd.concat(self.list_of_df)
 
     def sort_by_time(self):
         """
@@ -95,7 +95,7 @@ class TimeSeriesDataSet:
             assert len(sub_sampled_data) == ((len(df) + sub_sample_rate - 1) // sub_sample_rate)
             new_list_of_df.append(sub_sampled_data)
 
-        self.__list_of_df = new_list_of_df
+        self.list_of_df = new_list_of_df
 
 
     def deepAR_sub_sample_data(self, sub_sample_rate, agg = "max"):
@@ -117,7 +117,7 @@ class TimeSeriesDataSet:
             assert len(sub_sampled_data) == ((len(df) + sub_sample_rate - 1) // sub_sample_rate)
             new_list_of_df.append(sub_sampled_data)
 
-        self.__list_of_df = new_list_of_df
+        self.list_of_df = new_list_of_df
 
 
     def add_features(self):  # 2022-04-21 02:50:00   - example
@@ -129,7 +129,7 @@ class TimeSeriesDataSet:
         for df in self:
             df['hour'] = df['time'].apply(lambda x: int((str(x).split(' ')[1].split(':')[0])))
             df['day'] = df['time'].apply(lambda x: pd.Timestamp(str(x).split(' ')[0]).day_of_week) # or dayofweek
-        self.__list_of_df = new_list_of_df
+        self.list_of_df = new_list_of_df
 
     def mean_sub_sample_data(self, sub_sample_rate):
         """
@@ -145,7 +145,7 @@ class TimeSeriesDataSet:
             assert len(sub_sampled_data) == ((len(df) + sub_sample_rate - 1) // sub_sample_rate)
             new_list_of_df.append(sub_sampled_data)
 
-        self.__list_of_df = new_list_of_df
+        self.list_of_df = new_list_of_df
     
     
     def filter_data_that_is_too_short(self, data_length_limit):
@@ -160,7 +160,7 @@ class TimeSeriesDataSet:
             if len(df) > data_length_limit:
                 new_list_of_df.append(df)
 
-        self.__list_of_df = new_list_of_df
+        self.list_of_df = new_list_of_df
 
 
     def filter_series_with_zeros(self):
@@ -174,7 +174,7 @@ class TimeSeriesDataSet:
             if not df.isin([0]).any().any():
                 new_list_of_df.append(df)
 
-        self.__list_of_df = new_list_of_df
+        self.list_of_df = new_list_of_df
 
     def filter_series_extreme_values(self, n):
         """
@@ -188,7 +188,7 @@ class TimeSeriesDataSet:
             print(len(df.iloc[n:-n]))
             assert len(new_list_of_df[-1]) == len(df) - 2 * n
 
-        self.__list_of_df = new_list_of_df
+        self.list_of_df = new_list_of_df
 
 
     def plot_dataset(self, number_of_samples):
@@ -196,7 +196,7 @@ class TimeSeriesDataSet:
         randomly selects samples from the data sets and plots . x-axis is time and y-axis is the value
         @param number_of_samples: number of randomly selected samples
         """
-        samples = random.sample(self.__list_of_df, k=number_of_samples)
+        samples = random.sample(self.list_of_df, k=number_of_samples)
         for df in samples:
             title = df.iloc[0, 2:5].str.cat(sep=', ')
             # plt.close("all")
@@ -247,14 +247,14 @@ class TimeSeriesDataSet:
         """
         assert 0 < length_to_predict < min([len(df) for df in self])
         assert isinstance(length_to_predict, int)
-        random.shuffle(self.__list_of_df)
+        random.shuffle(self.list_of_df)
         # copy info to test
-        test = TimeSeriesDataSet(list_of_df=self.__list_of_df)
+        test = TimeSeriesDataSet(list_of_df=self.list_of_df)
         test.__is_data_scaled = self.__is_data_scaled
         test.__mean = self.__mean
         test.__std = self.__std
         # copy info to train
-        train = TimeSeriesDataSet(list_of_df=[df[:-length_to_predict] for df in self.__list_of_df])
+        train = TimeSeriesDataSet(list_of_df=[df[:-length_to_predict] for df in self.list_of_df])
         train.__is_data_scaled = self.__is_data_scaled
         train.__mean = self.__mean
         train.__std = self.__std
