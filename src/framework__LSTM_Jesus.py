@@ -6,7 +6,6 @@ import sys, getopt, subprocess
 import src.framework__data_set as ds
 import numpy as np
 import pandas as pd
-import yfinance as yf
 import tensorflow as tf
 from matplotlib import pylab
 from datetime import datetime, timedelta
