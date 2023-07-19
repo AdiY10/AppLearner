@@ -6,7 +6,7 @@ import tensorflow as tf
 from tensorflow.keras.models import Sequential, model_from_json
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.layers import Dense, LSTM, Dropout
-from sklearn.model_selection import train_test_split
+# from sklearn.model_selection import train_test_split
 
 tf.random.set_seed(0)
 
@@ -45,7 +45,7 @@ class LSTM:
 
         # Defining the sequential model
         model = Sequential()
-        model.add(LSTM(units=64, return_sequences=True, input_shape=(n_lookback, 1)))
+        model.add(LSTM(units=64, return_sequences=True, input_shape=(lookback, 1)))
         model.add(Dropout(dropout_rate))  # Adding dropout for regularization
         model.add(LSTM(units=64, return_sequences=False))
         model.add(Dropout(dropout_rate))  # Adding dropout for regularization
