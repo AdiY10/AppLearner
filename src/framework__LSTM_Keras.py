@@ -162,9 +162,9 @@ class LSTM:
         return Y_pred, rmse, mae, test_len, forecast_len, len_data
 
     def run_LSTM(self):
-        # Get intervals
+        # Determine the starting index for the testing portion of the dataset
         number = int("12") % int(len(self.dataset) * 0.2)
-        # Forecast interval selected (testing part)
+        # Forecast starting from the selected value
         dataset_to_test = self.dataset[int(len(self.dataset) * 0.8) + number:]
         # dataset_to_test = self.dataset
 
